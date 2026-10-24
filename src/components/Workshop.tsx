@@ -1,8 +1,15 @@
 import '../styles/inhabited-room.css';
 import '../styles/quiet-ship.css';
+import '../styles/enhancements.css';
+import { useCabinAudio } from '../state/useCabinAudio';
+import { readLocal, writeLocal } from '../state/storage';
+import ContributionLog from './ContributionLog';
+import CaseStudy from './CaseStudy';
+import type { ArrivalPhase } from '../scene/Environment';
 import { bodies, type BodyId } from '../data/celestial';
 import {
   lazy,
+  startTransition,
   Suspense,
   Component,
   useEffect,
@@ -20,6 +27,8 @@ import {
   type ProjectId,
 } from '../data/navigation';
 const Room = lazy(() => import('../scene/Room'));
+const StarMap = lazy(() => import('./StarMap'));
+const ProjectDemo = lazy(() => import('../demos/ProjectDemo'));
 const names: Record<Section, string> = {
   about: 'About',
   work: 'Work',
@@ -41,12 +50,47 @@ class SceneBoundary extends Component<
     return this.state.failed ? null : this.props.children;
   }
 }
+class OptionalBoundary extends Component<
+  { children: ReactNode; fallback: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    return this.state.failed ? this.props.fallback : this.props.children;
+  }
+}
 export default function Workshop() {
   const [destination, setDestination] = useState<Destination>({
     section: null,
     project: null,
     body: 'earth',
   });
+  const [mapOpen, setMapOpen] = useState(false);
+  const [docked, setDocked] = useState(false);
+  const [personalNote, setPersonalNote] = useState(false);
+  const [visited, setVisited] = useState<BodyId[]>([]);
+  const [arrival, setArrival] = useState<ArrivalPhase>('preparing');
+  const [sceneRetry, setSceneRetry] = useState(0);
+  const audio = useCabinAudio(!!destination.section || mapOpen);
+  function toggleDock() {
+    setDocked((value) => !value);
+    audio.play('dock');
+  }
+  function arrived(body: BodyId) {
+    setVisited((previous) => {
+      const next = previous.includes(body) ? previous : [...previous, body];
+      writeLocal('cabin-visited', next);
+      return next;
+    });
+    audio.play('arrival');
+  }
+  function revealNote() {
+    setPersonalNote((value) => !value);
+    audio.play('click');
+  }
   const [pendingProject, setPendingProject] = useState<ProjectId | null>(null);
   const [demo, setDemo] = useState(0);
   const openingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -68,6 +112,7 @@ export default function Workshop() {
     };
   }, []);
   const [look, setLook] = useState(0);
+  const [lookVertical, setLookVertical] = useState(0);
   const [lowEffects, setLowEffects] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
@@ -79,14 +124,21 @@ export default function Workshop() {
   const dialog = useRef<HTMLDialogElement>(null);
   const restoreFocus = useRef<HTMLElement | null>(null);
   useEffect(() => {
-    setMounted(true);
+    startTransition(() => setMounted(true));
+    const saved = readLocal<unknown>('cabin-visited', []);
+    if (Array.isArray(saved))
+      setVisited(
+        saved.filter((id): id is BodyId => bodies.some((b) => b.id === id)),
+      );
     setDestination(readDestination(window.location.search));
     const media = window.matchMedia('(prefers-reduced-motion: reduce)');
     const update = () => setReduced(media.matches);
     update();
     media.addEventListener('change', update);
-    const history = () =>
+    const history = () => {
+      setMapOpen(false);
       setDestination(readDestination(window.location.search));
+    };
     window.addEventListener('popstate', history);
     return () => {
       media.removeEventListener('change', update);
@@ -114,6 +166,8 @@ export default function Workshop() {
     project: ProjectId | null = null,
   ) => {
     cancelOpening();
+    setMapOpen(false);
+    audio.play('click');
     const next = { ...destination, section, project };
     setDestination(next);
     const nextUrl = window.location.pathname + destinationSearch(next);
@@ -139,6 +193,7 @@ export default function Workshop() {
   }
   function sceneSelect(section: Section, project?: ProjectId) {
     cancelOpening();
+    audio.play('click');
     if (
       section === 'work' &&
       project &&
@@ -187,6 +242,9 @@ export default function Workshop() {
       data-ready={ready}
       data-body={destination.body}
       data-low-effects={lowEffects}
+      data-sound={audio.enabled ? 'on' : 'off'}
+      data-lighting="working"
+      data-arrival={arrival}
       style={
         {
           '--body-color': bodies.find((b) => b.id === destination.body)?.color,
@@ -198,11 +256,22 @@ export default function Workshop() {
       </a>
       <div className="room-poster" aria-hidden="true" />
       {mounted && !failed && (
-        <SceneBoundary onError={() => setFailed(true)}>
+        <SceneBoundary key={sceneRetry} onError={() => setFailed(true)}>
           <Suspense fallback={null}>
             <Room
+              key={sceneRetry}
+              docked={docked}
+              personalNote={personalNote}
+              audioEnabled={audio.enabled}
+              onRadio={() => void audio.toggle()}
+              onDock={toggleDock}
+              onDiscover={revealNote}
+              onMap={() => setMapOpen(true)}
+              onArrivalPhase={setArrival}
+              onArrived={arrived}
               labelBottom={null}
               look={look}
+              lookVertical={lookVertical}
               section={destination.section}
               project={destination.project}
               activeProject={pendingProject ?? destination.project}
@@ -210,7 +279,7 @@ export default function Workshop() {
               body={destination.body}
               reduced={reduced || lowEffects || staticView}
               lowEffects={lowEffects}
-              frozen={staticView}
+              frozen={staticView || mapOpen}
               reset={reset}
               onSelect={sceneSelect}
               onReady={() => setReady(true)}
@@ -260,12 +329,87 @@ export default function Workshop() {
         <button aria-label="Look left" onClick={() => setLook((v) => v - 1)}>
           ←
         </button>
+        <button
+          aria-label="Look up"
+          onClick={() => setLookVertical((v) => v - 1)}
+        >
+          ↑
+        </button>
         <span>Look around</span>
+        <button
+          aria-label="Look down"
+          onClick={() => setLookVertical((v) => v + 1)}
+        >
+          ↓
+        </button>
         <button aria-label="Look right" onClick={() => setLook((v) => v + 1)}>
           →
         </button>
       </div>
-      <div className="destination-forward">{destinationControl}</div>
+      <div className="destination-forward">
+        {destinationControl}
+        <button className="chart-button" onClick={() => setMapOpen(true)}>
+          Star map
+        </button>
+        <span className="arrival-status" role="status">
+          {arrival === 'preparing'
+            ? 'Preparing destination…'
+            : arrival === 'travelling'
+              ? 'Arriving…'
+              : arrival === 'fallback'
+                ? 'Simplified scenery'
+                : bodies.find((b) => b.id === destination.body)?.cue}
+        </span>
+        {(failed || arrival === 'fallback') && (
+          <button
+            onClick={() => {
+              setFailed(false);
+              setReady(false);
+              setSceneRetry((v) => v + 1);
+            }}
+          >
+            Retry scenery
+          </button>
+        )}
+      </div>
+      {mapOpen && (
+        <OptionalBoundary
+          fallback={
+            <div className="map-loading" role="alert">
+              Star map could not load. Use the destination selector or reload to
+              retry. <button onClick={() => setMapOpen(false)}>Close</button>
+            </div>
+          }
+        >
+          <Suspense
+            fallback={
+              <div className="map-loading" role="status">
+                Opening star map…{' '}
+                <button onClick={() => setMapOpen(false)}>Cancel</button>
+              </div>
+            }
+          >
+            <StarMap
+              body={destination.body}
+              visited={visited}
+              onChoose={(body) => {
+                chooseBody(body);
+                setMapOpen(false);
+              }}
+              onClose={() => setMapOpen(false)}
+              onReset={() => {
+                setVisited([]);
+                writeLocal('cabin-visited', []);
+              }}
+            />
+          </Suspense>
+        </OptionalBoundary>
+      )}
+      {personalNote && (
+        <p className="discovery-caption" role="status">
+          Off the clock: music, aviation, games, and astronomy.
+        </p>
+      )}
       <footer className="ship-footer">
         <span className="scene-hint">
           {failed
@@ -277,8 +421,38 @@ export default function Workshop() {
                 : 'Select an instrument to explore a project'}
         </span>
         <details className="ship-settings">
-          <summary>View & destinations</summary>
+          <summary>Cabin controls</summary>
           <div className="settings-content">
+            <button
+              aria-pressed={audio.enabled}
+              onClick={() => void audio.toggle()}
+            >
+              {audio.enabled ? 'Mute cabin sound' : 'Enable cabin sound'}
+            </button>
+            <label className="volume-control">
+              Sound volume
+              <input
+                aria-label="Sound volume"
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={audio.volume}
+                onChange={(e) => audio.setVolume(Number(e.target.value))}
+              />
+            </label>
+            <button aria-pressed={docked} onClick={toggleDock}>
+              {docked ? 'Launch inspection drone' : 'Dock inspection drone'}
+            </button>
+            <button aria-pressed={personalNote} onClick={revealNote}>
+              Lunar note · left wall
+            </button>
+            <button
+              disabled={!audio.enabled}
+              onClick={() => audio.play('signal')}
+            >
+              Play radio signal
+            </button>
             <button
               aria-pressed={lowEffects}
               onClick={() => setLowEffects((v) => !v)}
@@ -351,6 +525,7 @@ export default function Workshop() {
                   building something useful, and making it easier for someone to
                   get their work done.
                 </p>
+                <ContributionLog />
                 <div className="note-card">
                   <span>Off the clock</span>
                   <p>
@@ -415,52 +590,6 @@ export default function Workshop() {
                     <span key={tag}>{tag}</span>
                   ))}
                 </div>
-                {project.id === 'noclash' && (
-                  <div
-                    className="schedule-art"
-                    aria-label="Illustration of a timetable organized into a weekly schedule"
-                  >
-                    <div className="schedule-days">
-                      <span>Mon</span>
-                      <span>Tue</span>
-                      <span>Wed</span>
-                      <span>Thu</span>
-                      <span>Fri</span>
-                    </div>
-                    <div className="schedule-grid">
-                      {Array.from({ length: 20 }, (_, i) => (
-                        <div
-                          key={i}
-                          className={
-                            [0, 6, 12, 18].includes(i) ? 'class-block' : ''
-                          }
-                        >
-                          {[0, 6, 12, 18].includes(i)
-                            ? ['Design', 'Systems', 'Lab', 'Seminar'][
-                                Math.floor(i / 6)
-                              ]
-                            : ''}
-                        </div>
-                      ))}
-                    </div>
-                    <small>
-                      Workflow illustration · not an application screenshot
-                    </small>
-                  </div>
-                )}
-                <h3>The problem</h3>
-                <p>{project.problem}</p>
-                <h3>The approach</h3>
-                <p>{project.solution}</p>
-                {project.id === 'noclash' && (
-                  <div className="note-card">
-                    <span>A thoughtful boundary</span>
-                    <p>
-                      AI helps interpret the timetable. Students review the
-                      extracted data; scheduling rules handle the clash checks.
-                    </p>
-                  </div>
-                )}
                 <div className="panel-actions">
                   {project.url && (
                     <a
@@ -483,6 +612,21 @@ export default function Workshop() {
                     </a>
                   )}
                 </div>
+                <CaseStudy project={project} />
+                <OptionalBoundary
+                  key={project.id}
+                  fallback={
+                    <p role="alert">
+                      The optional example could not load. The case study and
+                      source links are still available. Reload to retry the
+                      example.
+                    </p>
+                  }
+                >
+                  <Suspense fallback={<p>Preparing the example…</p>}>
+                    <ProjectDemo key={project.id} project={project.id} />
+                  </Suspense>
+                </OptionalBoundary>
               </>
             )}
             {destination.section === 'experience' && (
@@ -506,6 +650,7 @@ export default function Workshop() {
                   I care about understanding the task, reviewing the details,
                   and building something that helps the person doing the work.
                 </p>
+                <ContributionLog />
                 <div className="approach-step">
                   <span>Understand the task</span>
                   <p>

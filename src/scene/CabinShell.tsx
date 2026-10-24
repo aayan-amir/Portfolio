@@ -235,6 +235,38 @@ export function CabinShell({ body }: { body: BodyId }) {
         distance={10}
         color="#d5e9eb"
       />
+      <CabinDestinationDecor body={body} />
+      {[-6, -2.6].map((x) => (
+        <group key={x}>
+          <Block
+            at={[x, 3.55, -4.16]}
+            size={[0.028, 3.3, 0.028]}
+            color="#62818a"
+            radius={0.004}
+          />
+          {[2.2, 4.9].map((y) => (
+            <mesh
+              key={y}
+              position={[x, y, -4.11]}
+              rotation={[Math.PI / 2, 0, 0]}
+            >
+              <cylinderGeometry args={[0.04, 0.04, 0.035, 12]} />
+              <meshStandardMaterial
+                color={cabin.trim}
+                metalness={0.7}
+                roughness={0.4}
+              />
+            </mesh>
+          ))}
+        </group>
+      ))}{' '}
+    </group>
+  );
+}
+
+export function CabinDestinationDecor({ body }: { body: BodyId }) {
+  return (
+    <group>
       {body === 'sun' &&
         [0, 1, 2].map((i) => (
           <group key={i}>
@@ -264,30 +296,6 @@ export function CabinShell({ body }: { body: BodyId }) {
             />
           </mesh>
         ))}
-      {[-6, -2.6].map((x) => (
-        <group key={x}>
-          <Block
-            at={[x, 3.55, -4.16]}
-            size={[0.028, 3.3, 0.028]}
-            color="#62818a"
-            radius={0.004}
-          />
-          {[2.2, 4.9].map((y) => (
-            <mesh
-              key={y}
-              position={[x, y, -4.11]}
-              rotation={[Math.PI / 2, 0, 0]}
-            >
-              <cylinderGeometry args={[0.04, 0.04, 0.035, 12]} />
-              <meshStandardMaterial
-                color={cabin.trim}
-                metalness={0.7}
-                roughness={0.4}
-              />
-            </mesh>
-          ))}
-        </group>
-      ))}{' '}
     </group>
   );
 }

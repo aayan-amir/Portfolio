@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type RefObject } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { bodies, type BodyId } from '../data/celestial';
@@ -10,10 +10,12 @@ import {
   ringFragment,
 } from './planetShaders';
 export function CelestialBackdrop({
+  arrivalMotion,
   body,
   reduced,
   lowEffects,
 }: {
+  arrivalMotion: RefObject<number>;
   body: BodyId;
   reduced: boolean;
   lowEffects: boolean;
@@ -36,7 +38,7 @@ export function CelestialBackdrop({
   useEffect(() => {
     let current = true;
     const urls: Record<BodyId, string | null> = {
-      earth: '/earth-day.jpg',
+      earth: '/earth-day-2048.jpg',
       mercury: '/planets/mercury.jpg',
       venus: '/planets/venus_atmosphere.jpg',
       mars: '/planets/mars.jpg',
@@ -47,6 +49,7 @@ export function CelestialBackdrop({
       sun: '/planets/sun.jpg',
     };
     const url = urls[body];
+    gl.domElement.dataset.destination = body;
     gl.domElement.dataset.planetTexture = url ? 'loading' : 'procedural';
     if (!url) {
       setSurface(null);
@@ -136,11 +139,18 @@ export function CelestialBackdrop({
     return a;
   }, []);
   const planet = useRef<THREE.Mesh>(null);
+  const journey = useRef<THREE.Group>(null);
   useEffect(() => {
     invalidate();
   }, [body, surface]);
   useFrame((_, dt) => {
     gl.domElement.dataset.destination = body;
+    if (journey.current) {
+      const ease = 1 - Math.pow(1 - arrivalMotion.current, 3);
+      journey.current.position.x =
+        (size.width < 600 ? 3.5 : 7) + (1 - ease) * 5;
+      journey.current.scale.setScalar(scale * (0.9 + 0.1 * ease));
+    }
     gl.domElement.dataset.planetLighting = 'view-space';
     if (!reduced && !document.hidden) {
       uniforms.time.value += Math.min(dt, 0.05);
@@ -168,6 +178,7 @@ export function CelestialBackdrop({
         <pointsMaterial color="#b8cdd5" size={0.055} depthWrite={false} />
       </points>
       <group
+        ref={journey}
         position={portrait ? [3.5, 7.0, -29] : [7.0, 6.6, -30]}
         scale={scale}
       >

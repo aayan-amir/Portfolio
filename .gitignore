@@ -4,6 +4,7 @@ node_modules/
 /.astro/
 /.astro-seed/
 /.cache/
+/.vite/
 
 # Environment files; keep safe example configuration in version control
 .env*
@@ -25,6 +26,25 @@ node_modules/
 /tmp/
 /temp/
 *.tsbuildinfo
+
+# Standalone Lighthouse reports and local performance captures
+# Audits normally live in /output/; cover CLI defaults in the repo root too.
+/.lighthouseci/
+/*.report.html
+/*.report.json
+/*.trace.json
+/*.devtoolslog.json
+/*.cpuprofile
+/*.heapprofile
+/*.heapsnapshot
+
+# Downloaded npm inspection archives and unprocessed scene exports
+/*.tgz
+/static-cabin.croom
+
+# Python helper caches
+__pycache__/
+*.py[cod]
 
 # Logs and local process files
 *.log

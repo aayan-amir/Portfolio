@@ -10,6 +10,7 @@ export function useAnchoredCamera(
   reset: number,
   frozen: boolean,
   look: number = 0,
+  lookVertical: number = 0,
 ) {
   const { gl, camera, invalidate, size } = useThree();
   const pointer = useRef<{
@@ -67,12 +68,26 @@ export function useAnchoredCamera(
     );
     invalidate();
   }, [look, section, frozen]);
+  const previousVertical = useRef(lookVertical);
+  useEffect(() => {
+    const delta = lookVertical - previousVertical.current;
+    previousVertical.current = lookVertical;
+    if (!delta || section || frozen) return;
+    desired.current = dragAngles(
+      desired.current.yaw,
+      desired.current.pitch,
+      0,
+      Math.sign(delta) * 100,
+    );
+    invalidate();
+  }, [lookVertical, section, frozen, invalidate]);
   useEffect(() => {
     const canvas = gl.domElement;
     const down = (e: PointerEvent) => {
       if (section || frozen) return;
       if (!e.isPrimary || e.button !== 0) return;
       canvas.setPointerCapture(e.pointerId);
+      canvas.style.cursor = 'grabbing';
       pointer.current = {
         id: e.pointerId,
         x: e.clientX,
@@ -88,6 +103,10 @@ export function useAnchoredCamera(
       const distance = Math.hypot(e.clientX - p.x, e.clientY - p.y);
       if (distance > 6) p.dragged = true;
       if (p.dragged) {
+        // Camera owns this gesture. Skip R3F's recursive mesh picking and
+        // hover/React updates until release; clicks still use normal picking.
+        e.stopPropagation();
+        canvas.dataset.cameraDragging = 'true';
         desired.current = dragAngles(
           desired.current.yaw,
           desired.current.pitch,
@@ -102,14 +121,18 @@ export function useAnchoredCamera(
     const up = (e: PointerEvent) => {
       if (canvas.hasPointerCapture(e.pointerId))
         canvas.releasePointerCapture(e.pointerId);
+      canvas.style.cursor = 'grab';
+      canvas.dataset.cameraDragging = 'false';
       window.setTimeout(() => {
-        pointer.current = null;
+        if (pointer.current?.id === e.pointerId) pointer.current = null;
       }, 0);
     };
     const cancel = () => {
       if (pointer.current && canvas.hasPointerCapture(pointer.current.id))
         canvas.releasePointerCapture(pointer.current.id);
       pointer.current = null;
+      canvas.style.cursor = 'grab';
+      canvas.dataset.cameraDragging = 'false';
     };
     const key = (e: KeyboardEvent) => {
       if (
@@ -129,14 +152,17 @@ export function useAnchoredCamera(
     };
     canvas.addEventListener('keydown', key);
     canvas.addEventListener('pointerdown', down);
-    window.addEventListener('pointermove', move);
+    window.addEventListener('pointermove', move, {
+      capture: true,
+      passive: true,
+    });
     window.addEventListener('pointerup', up);
     window.addEventListener('pointercancel', cancel);
     window.addEventListener('blur', cancel);
     return () => {
       canvas.removeEventListener('keydown', key);
       canvas.removeEventListener('pointerdown', down);
-      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointermove', move, true);
       window.removeEventListener('pointerup', up);
       window.removeEventListener('pointercancel', cancel);
       window.removeEventListener('blur', cancel);
@@ -147,15 +173,17 @@ export function useAnchoredCamera(
     const a = angles.current,
       d = desired.current;
     const delta = Math.min(rawDelta, 0.05);
+    // Fast tracking while held; a short ease-out for keys and release.
+    const damping = pointer.current?.dragged ? 22 : 14;
     const changing =
       Math.abs(a.yaw - d.yaw) + Math.abs(a.pitch - d.pitch) > 0.0001;
     if (changing || !first.current) {
-      gl.domElement.dataset.yaw = String(a.yaw);
-      gl.domElement.dataset.pitch = String(a.pitch);
-      a.yaw = reduced ? d.yaw : THREE.MathUtils.damp(a.yaw, d.yaw, 6, delta);
+      a.yaw = reduced
+        ? d.yaw
+        : THREE.MathUtils.damp(a.yaw, d.yaw, damping, delta);
       a.pitch = reduced
         ? d.pitch
-        : THREE.MathUtils.damp(a.pitch, d.pitch, 6, delta);
+        : THREE.MathUtils.damp(a.pitch, d.pitch, damping, delta);
       camera.rotation.set(
         (size.width < 600 ? -0.045 : -0.105) + a.pitch,
         a.yaw,
@@ -163,6 +191,9 @@ export function useAnchoredCamera(
         'YXZ',
       );
       camera.updateMatrixWorld();
+      gl.domElement.dataset.yaw = String(a.yaw);
+      gl.domElement.dataset.pitch = String(a.pitch);
+
       first.current = true;
       if (changing) invalidate();
     }

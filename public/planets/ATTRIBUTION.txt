@@ -8,3 +8,5 @@ https://github.com/TanvirAhmedArnab/SolarSystem/tree/main/SourceAssets/ThirdPart
 Provenance: https://github.com/TanvirAhmedArnab/SolarSystem/blob/main/Docs/Legal/ThirdPartyAssets.md
 Mercury SHA256 verified: 5A5C80607F643496BAC9A631E71957DEF35ED788895F18B678AC849C2B38E48A
 Image pixels not modified. Runtime lighting and atmospheric treatment are artistic.
+
+Earth: Three.js examples earth_day_4096.jpg. Runtime derivative /earth-day-2048.jpg resized to 2048 x 1024 and JPEG encoded at quality 88. The original remains available.

@@ -1,7 +1,7 @@
 import { Block, Disc, Arc } from './Primitives';
 import { cabin } from './CabinShell';
 import { useLinen } from './WorkshopSurfaces';
-import { RoundedBox } from '@react-three/drei';
+import { RoundedBox } from './Primitives';
 
 function Vent({ at }: { at: [number, number, number] }) {
   return (

@@ -1,5 +1,8 @@
 ---
+import Seo from '../components/Seo.astro';
 import { profile, projects } from '../data/content';
+import { contributions } from '../data/contributions';
+import CaseStudy from '../components/CaseStudy';
 import { resume } from '../data/resume';
 import '../styles/global.css';
 ---
@@ -9,10 +12,9 @@ import '../styles/global.css';
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Aayan Amir — Text portfolio</title>
-    <meta
-      name="description"
-      content="Aayan Amir’s software projects, approach, and contact information."
+    <Seo
+      title="Aayan Amir — Projects and experience"
+      description="Software projects, engineering decisions and contributions by Aayan Amir. Open to backend and full-stack internships, junior roles and freelance work."
     />
   </head>
   <body class="reading-page">
@@ -38,10 +40,22 @@ import '../styles/global.css';
         <article>
           <p class="eyebrow">{project.category}</p>
           <h3>{project.name}</h3>
-          <p>{project.problem}</p>
-          <p>{project.solution}</p>
+          <CaseStudy project={project} level={4} />
           {project.url && <a href={project.url}>Visit live project</a>}{' '}
           {project.source && <a href={project.source}>Source code</a>}
+        </article>
+      ))}
+      <h2>Contributions</h2>
+      <p>KOGO Metal · Backend Developer (Contract) · January–September 2026</p>
+      {contributions.map((item) => (
+        <article>
+          <h3>{item.title}</h3>
+          <p>
+            {item.before} {item.change}
+          </p>
+          <p>
+            <strong>{item.result}</strong>
+          </p>
         </article>
       ))}
       <h2>How I work</h2>
@@ -68,9 +82,9 @@ import '../styles/global.css';
           <a href="https://github.com/mrdoob/three.js/blob/dev/examples/textures/planets/earth_day_4096.jpg">
             Three.js examples
           </a>
-          ; no further image modifications here. Other scene geometry and
-          procedural materials are original. Additional map provenance is
-          recorded in{' '}
+          ; the default Earth map is resized to 2048 × 1024 for lower texture
+          memory. Other scene geometry and procedural materials are original.
+          Additional map provenance is recorded in{' '}
           <a href="/planets/ATTRIBUTION.txt">planet texture attribution</a>.
         </p>
       </aside>

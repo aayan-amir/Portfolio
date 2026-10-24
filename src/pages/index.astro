@@ -1,4 +1,5 @@
 ---
+import Seo from '../components/Seo.astro';
 import Workshop from '../components/Workshop';
 import '../styles/global.css';
 ---
@@ -9,12 +10,10 @@ import '../styles/global.css';
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#e8e4da" />
-    <title>Aayan Amir — Software developer</title>
-    <meta
-      name="description"
-      content="Step inside Aayan Amir’s orbital workshop. Practical software, thoughtful problem solving, and a little curiosity."
+    <Seo
+      title="Aayan Amir — Software developer"
+      description="Backend and full-stack developer in Karachi. Explore NoClash, Student Portal and NoTerm, practical engineering decisions, experience and resume."
     />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
   </head>
   <body>
     <Workshop client:load />

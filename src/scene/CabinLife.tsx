@@ -5,12 +5,35 @@ import { Block, Arc } from './Primitives';
 import { cabin } from './CabinShell';
 
 /** A bounded 30 Hz wake-up for the demand renderer; camera input may render faster. */
-export function CabinLife({ paused }: { paused: boolean }) {
+export function CabinLife({
+  paused,
+  docked,
+  attention,
+  onDock,
+}: {
+  paused: boolean;
+  docked: boolean;
+  attention: string | null;
+  onDock: () => void;
+}) {
   const { invalidate, gl } = useThree();
   const drone = useRef<THREE.Group>(null),
     rotor = useRef<THREE.Group>(null),
     satellite = useRef<THREE.Group>(null);
   const time = useRef(0);
+  const intervals = useRef<number[]>([]);
+  const target = useRef(new THREE.Vector3());
+  useEffect(() => {
+    if (paused && drone.current)
+      drone.current.position.set(
+        ...((docked ? [-5.3, 2.24, 1.55] : [1.15, 3.45, -2.45]) as [
+          number,
+          number,
+          number,
+        ]),
+      );
+    invalidate();
+  }, [paused, docked, invalidate]);
   useEffect(() => {
     if (paused) {
       invalidate();
@@ -31,21 +54,47 @@ export function CabinLife({ paused }: { paused: boolean }) {
   }, [paused, invalidate]);
   useFrame((_, dt) => {
     if (paused || document.hidden) return;
+    intervals.current.push(dt * 1000);
+    if (intervals.current.length === 120) {
+      const samples = intervals.current.sort((a, b) => a - b);
+      gl.domElement.dataset.frameIntervalP50 = samples[60].toFixed(1);
+      gl.domElement.dataset.frameIntervalP95 = samples[114].toFixed(1);
+      intervals.current = [];
+    }
     time.current += Math.min(dt, 0.05);
     const t = time.current;
     if (drone.current) {
-      drone.current.position.set(
-        1.15 + Math.sin(t * 0.28) * 0.55,
-        3.45 + Math.sin(t * 0.9) * 0.22,
-        -2.45,
+      target.current.set(
+        docked ? -5.3 : 1.15 + Math.sin(t * 0.28) * 0.55,
+        docked ? 2.24 : 3.45 + Math.sin(t * 0.9) * 0.22,
+        docked ? 1.55 : -2.45,
       );
+      drone.current.position.lerp(
+        target.current,
+        1 - Math.exp(-4 * Math.min(dt, 0.05)),
+      );
+      const aimX =
+        attention === 'noclash'
+          ? -0.8
+          : attention === 'student-portal'
+            ? -4.1
+            : attention === 'noterm'
+              ? 3.7
+              : 1.15;
       drone.current.rotation.set(
-        Math.sin(t * 0.7) * 0.07,
-        Math.sin(t * 0.35) * 0.35,
-        Math.sin(t * 0.6) * 0.08,
+        Math.sin(t * 0.7) * 0.05,
+        THREE.MathUtils.damp(
+          drone.current.rotation.y,
+          attention
+            ? Math.atan2(aimX - drone.current.position.x, 5)
+            : Math.sin(t * 0.35) * 0.35,
+          4,
+          Math.min(dt, 0.05),
+        ),
+        docked ? 0 : Math.sin(t * 0.6) * 0.08,
       );
     }
-    if (rotor.current) rotor.current.rotation.z = t * 1.7;
+    if (rotor.current && !docked) rotor.current.rotation.z = t * 1.7;
     if (satellite.current) {
       satellite.current.position.set(
         1.8 + Math.sin(t * 0.08) * 9,
@@ -55,11 +104,25 @@ export function CabinLife({ paused }: { paused: boolean }) {
       satellite.current.rotation.z = t * 0.08;
     }
     gl.domElement.dataset.cabinTime = t.toFixed(3);
+    gl.domElement.dataset.droneState = docked
+      ? 'docked'
+      : attention
+        ? 'attending'
+        : 'idle';
   });
   return (
     <group>
       {/* A small inspection drone gives the foreground a clear, gentle motion. */}
-      <group ref={drone} position={[1.15, 3.45, -2.45]} scale={0.68}>
+      <group
+        ref={drone}
+        position={[1.15, 3.45, -2.45]}
+        scale={0.68}
+        onClick={(e) => {
+          if (e.delta > 6) return;
+          e.stopPropagation();
+          onDock();
+        }}
+      >
         <mesh>
           <sphereGeometry args={[0.32, 24, 16]} />
           <meshStandardMaterial

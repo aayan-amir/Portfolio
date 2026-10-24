@@ -1,5 +1,57 @@
-import { RoundedBox } from '@react-three/drei';
-import type { ReactNode } from 'react';
+import { useMemo, useEffect, type ReactNode } from 'react';
+import type { ThreeElements } from '@react-three/fiber';
+import * as THREE from 'three';
+import { useSceneResources } from './SceneResources';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+// Direct bevel geometry avoids ExtrudeGeometry + expensive creased-normal rebuilds.
+export function RoundedBox({
+  args,
+  radius = 0.04,
+  children,
+  ...props
+}: Omit<ThreeElements['mesh'], 'args'> & {
+  args: [number, number, number];
+  radius?: number;
+}) {
+  const pool = useSceneResources();
+  const [width, height, depth] = args;
+  const geometry = useMemo(
+    () =>
+      pool?.geometry(
+        `box|${width}|${height}|${depth}|${radius}`,
+        () => new RoundedBoxGeometry(width, height, depth, 2, radius),
+      ) ?? new RoundedBoxGeometry(width, height, depth, 2, radius),
+    [pool, width, height, depth, radius],
+  );
+  useEffect(
+    () => () => {
+      if (!pool) geometry.dispose();
+    },
+    [pool, geometry],
+  );
+  return (
+    <mesh {...props} geometry={geometry}>
+      {children}
+    </mesh>
+  );
+}
+function useStandard(color: string, roughness: number, metalness: number) {
+  const pool = useSceneResources();
+  const material = useMemo(
+    () =>
+      pool?.standard(color, roughness, metalness) ??
+      new THREE.MeshStandardMaterial({ color, roughness, metalness }),
+    [pool, color, roughness, metalness],
+  );
+  useEffect(
+    () => () => {
+      if (!pool) material.dispose();
+    },
+    [pool, material],
+  );
+  return material;
+}
 const ceramic = '#becbcf',
   metal = '#879ba5';
 export function Block({
@@ -17,17 +69,17 @@ export function Block({
   radius?: number;
   children?: ReactNode;
 }) {
+  const material = useStandard(color, 0.42, 0.25);
   return (
     <RoundedBox
       position={at}
       args={size}
       radius={radius}
-      smoothness={1}
       rotation={rotation}
       castShadow={size[0] > 0.4 && size[1] > 0.15}
       receiveShadow
+      material={material}
     >
-      <meshStandardMaterial color={color} roughness={0.42} metalness={0.25} />
       {children}
     </RoundedBox>
   );

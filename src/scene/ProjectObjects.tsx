@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { Block, Disc, Arc } from './Primitives';
 import { cabin } from './CabinShell';
 type DemoProps = { active: boolean; demo?: number; reduced?: boolean };
-function useMechanism(active: boolean, demo: number, reduced: boolean) {
+export function useMechanism(active: boolean, demo: number, reduced: boolean) {
   const phase = useRef(0);
   const { invalidate, gl } = useThree();
   useEffect(() => {
@@ -177,7 +177,7 @@ export function NavigationPlanner({
         : 0.65 + idleTime.current * 0.45;
   });
   return (
-    <group>
+    <group name="project-noclash">
       <Block
         at={[0, 0.12, 0]}
         size={[2.65, 0.24, 1.65]}
@@ -216,7 +216,7 @@ export function NavigationPlanner({
             />
           </group>
         ))}
-        <group ref={arm}>
+        <group ref={arm} name="planner-arm">
           <Block
             at={[0, 0.29, 0.18]}
             size={[0.018, 0.58, 0.015]}
@@ -291,7 +291,7 @@ export function ResourceArchive({
         : 0;
   });
   return (
-    <group>
+    <group name="project-student-portal">
       <Block
         at={[0, 0.97, -0.15]}
         size={[2.1, 1.94, 0.72]}
@@ -313,7 +313,10 @@ export function ResourceArchive({
               color={cabin.recess}
               radius={0.025}
             />
-            <group ref={i === 2 ? tray : undefined}>
+            <group
+              ref={i === 2 ? tray : undefined}
+              name={i === 2 ? 'archive-tray' : undefined}
+            >
               <Block
                 at={[0, 0, 0.09]}
                 size={[0.59, 0.19, 0.3]}
@@ -380,7 +383,7 @@ export function MaintenanceTerminal({
         : 0;
   });
   return (
-    <group ref={chassis}>
+    <group ref={chassis} name="project-noterm">
       <Block
         at={[0, 0.23, 0]}
         size={[2.15, 0.46, 1.5]}
@@ -434,7 +437,7 @@ export function MaintenanceTerminal({
           radius={0.02}
         />
       ))}
-      <group ref={lever} position={[0.67, 0.53, 0.43]}>
+      <group ref={lever} name="terminal-lever" position={[0.67, 0.53, 0.43]}>
         <Block at={[0, 0.12, 0]} size={[0.08, 0.28, 0.08]} color={cabin.trim} />
         <Block
           at={[0, 0.28, 0]}

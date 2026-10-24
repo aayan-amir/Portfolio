@@ -8,6 +8,8 @@ import {
 import { Environment, Lightformer, ContactShadows } from '@react-three/drei';
 import {
   useEffect,
+  useCallback,
+  memo,
   useRef,
   useState,
   type ReactNode,
@@ -15,28 +17,40 @@ import {
 } from 'react';
 import * as THREE from 'three';
 import { CelestialBackdrop } from './Observatory';
-import { CabinShell } from './CabinShell';
-import { WallDecor } from './WallDecor';
-import {
-  IntegratedWorkbench,
-  ReadingNook,
-  Notebook,
-  ResumeFolio,
-  ContactRadio,
-  PersonalDetails,
-} from './Workbench';
+import { CabinDestinationDecor } from './CabinShell';
+import { StaticCabin, type ProjectModels } from './StaticCabin';
+import { PreparedProject } from './PreparedProject';
+import { StaticCabinSource } from './StaticCabinSource';
+import { BakeStaticCabin } from './BakeStaticCabin';
+import { PersonalWallPrint } from './WallDecor';
+import { Notebook, ResumeFolio, ContactRadio } from './Workbench';
 import {
   NavigationPlanner,
   ResourceArchive,
   MaintenanceTerminal,
 } from './ProjectObjects';
 import { useAnchoredCamera } from './useAnchoredCamera';
+import { usePreparedRenderer } from './usePreparedRenderer';
+import { BakeEnvironment } from './BakeEnvironment';
+import { CabinEnvironment } from './CabinEnvironment';
+import { SceneResources } from './SceneResources';
+import { Arrival, CabinLighting, type ArrivalPhase } from './Environment';
+import { NavigationChart } from './CabinInstruments';
 import { CabinLife } from './CabinLife';
 import { PlanetTreatment } from './PlanetTreatment';
 import { resume, downloadResume } from '../data/resume';
 import type { BodyId } from '../data/celestial';
 import type { ProjectId, Section } from '../data/navigation';
 type Props = {
+  docked: boolean;
+  personalNote: boolean;
+  audioEnabled: boolean;
+  onRadio: () => void;
+  onDock: () => void;
+  onDiscover: () => void;
+  onMap: () => void;
+  onArrivalPhase: (phase: ArrivalPhase) => void;
+  onArrived: (body: BodyId) => void;
   section: Section | null;
   project: ProjectId | null;
   activeProject: ProjectId | null;
@@ -47,6 +61,7 @@ type Props = {
   frozen: boolean;
   reset: number;
   look: number;
+  lookVertical: number;
   labelBottom: number | null;
   onSelect: (section: Section, project?: ProjectId) => void;
   onReady: () => void;
@@ -92,9 +107,15 @@ const labels = [
   },
   {
     id: 'contact',
-    title: 'Contact',
-    detail: 'Start a conversation',
+    title: 'Cabin radio',
+    detail: 'Toggle cabin sound',
     section: 'contact',
+  },
+  {
+    id: 'destinations',
+    title: 'Star map',
+    detail: 'Choose a destination',
+    section: 'about',
   },
 ] as const;
 function RoomObject({
@@ -110,7 +131,9 @@ function RoomObject({
   motion,
   dragged,
   children,
+  onAttention,
 }: {
+  onAttention?: (id: string | null) => void;
   id: string;
   labelNodes: LabelNodes;
   labelBottom: number | null;
@@ -168,26 +191,29 @@ function RoomObject({
   });
   return (
     <group ref={anchor} position={at} rotation={[0, rotation, 0]} scale={scale}>
-      <group
-        ref={group}
-        onPointerOver={(e) => {
-          e.stopPropagation();
-          if (canSelect) {
-            setHover(true);
-            gl.domElement.style.cursor = 'pointer';
-          }
-        }}
-        onPointerOut={() => {
-          setHover(false);
-          gl.domElement.style.cursor = 'grab';
-        }}
-        onClick={(e: ThreeEvent<MouseEvent>) => {
-          e.stopPropagation();
-          activate();
-        }}
-      >
+      <group ref={group}>
         {children}
-        <mesh position={[0, 0.4, 0]} visible={false}>
+        <mesh
+          position={[0, 0.4, 0]}
+          visible={false}
+          onPointerOver={(e) => {
+            e.stopPropagation();
+            if (canSelect) {
+              setHover(true);
+              onAttention?.(id);
+              gl.domElement.style.cursor = 'pointer';
+            }
+          }}
+          onPointerOut={() => {
+            setHover(false);
+            onAttention?.(null);
+            gl.domElement.style.cursor = 'grab';
+          }}
+          onClick={(e: ThreeEvent<MouseEvent>) => {
+            e.stopPropagation();
+            activate();
+          }}
+        >
           <boxGeometry args={[2.5, 1.7, 1.5]} />
           <meshBasicMaterial />
         </mesh>
@@ -195,7 +221,48 @@ function RoomObject({
     </group>
   );
 }
-function Scene(props: Props & { labelNodes: LabelNodes }) {
+// These offscreen passes must not rerun for hover/arrival React updates.
+const RealtimeEnvironment = memo(function RealtimeEnvironment() {
+  return (
+    <Environment resolution={128} frames={1} environmentIntensity={1}>
+      <Lightformer
+        intensity={1.7}
+        color="#d6e6e5"
+        position={[0, 6, 0]}
+        rotation={[Math.PI / 2, 0, 0]}
+        scale={[12, 8, 1]}
+      />
+      <Lightformer
+        intensity={1}
+        color="#e6c6a1"
+        position={[-7, 2, 4]}
+        rotation={[0, Math.PI / 2, 0]}
+        scale={[5, 4, 1]}
+      />
+    </Environment>
+  );
+});
+const GroundShadow = memo(function GroundShadow() {
+  return (
+    <ContactShadows
+      position={[0, 0.018, 0]}
+      frames={1}
+      opacity={0.3}
+      scale={16}
+      blur={2.4}
+      far={4}
+      resolution={256}
+      color="#594132"
+    />
+  );
+});
+function Scene(
+  props: Props & {
+    labelNodes: LabelNodes;
+    attention: string | null;
+    onAttention: (id: string | null) => void;
+  },
+) {
   const { gl, invalidate } = useThree();
   const pointer = useAnchoredCamera(
     props.section,
@@ -204,8 +271,34 @@ function Scene(props: Props & { labelNodes: LabelNodes }) {
     props.reset,
     props.frozen,
     props.look,
+    props.lookVertical,
+  );
+  const bakeLighting =
+    import.meta.env.DEV &&
+    new URLSearchParams(window.location.search).has('bakeLighting');
+  const bakeCabin =
+    import.meta.env.DEV &&
+    new URLSearchParams(window.location.search).has('bakeCabin');
+  const [projectModels, setProjectModels] = useState<ProjectModels | null>(
+    null,
+  );
+  const [staticReady, setStaticReady] = useState(bakeCabin);
+  const onStaticReady = useCallback((models: ProjectModels | null) => {
+    setProjectModels(models);
+    setStaticReady(true);
+  }, []);
+  const [environmentReady, setEnvironmentReady] = useState(bakeLighting);
+  const setEnvironmentReadyCallback = useCallback(
+    () => setEnvironmentReady(true),
+    [],
+  );
+  const prepared = usePreparedRenderer(
+    environmentReady && staticReady,
+    props.onReady,
+    props.onFailure,
   );
   const frames = useRef(0);
+  const arrivalMotion = useRef(1);
   useEffect(() => {
     const canvas = gl.domElement;
     canvas.tabIndex = 0;
@@ -220,13 +313,6 @@ function Scene(props: Props & { labelNodes: LabelNodes }) {
     canvas.addEventListener('webglcontextlost', lost);
     return () => canvas.removeEventListener('webglcontextlost', lost);
   }, [gl, props.onFailure]);
-  useEffect(() => {
-    const id = requestAnimationFrame(() => {
-      gl.domElement.dataset.ready = 'true';
-      props.onReady();
-    });
-    return () => cancelAnimationFrame(id);
-  }, []);
   useEffect(() => {
     invalidate();
   }, [props.body, props.section]);
@@ -251,70 +337,77 @@ function Scene(props: Props & { labelNodes: LabelNodes }) {
     };
   }, [gl]);
   useFrame(() => gl.info.reset(), -100);
-  const available = !props.section;
+  const available = prepared && !props.section;
   const dragged = () => !!pointer.current?.dragged;
   return (
     <>
       <color attach="background" args={['#07121c']} />
-      <hemisphereLight args={['#e3eee9', '#34505b', 0.85]} />
-      <directionalLight
-        position={[-4, 7, 6]}
-        intensity={1.1}
-        color="#ffedcf"
-        castShadow={false}
-        shadow-mapSize={props.lowEffects ? [512, 512] : [1024, 1024]}
-        shadow-camera-left={-9}
-        shadow-camera-right={9}
-        shadow-camera-top={9}
-        shadow-camera-bottom={-7}
-        shadow-normalBias={0.035}
-      />
-      <directionalLight
-        position={[6, 5, -5]}
-        intensity={0.55}
-        color="#c2d7d3"
-      />
-      <Environment resolution={128} frames={1}>
-        <Lightformer
-          intensity={1.7}
-          color="#d6e6e5"
-          position={[0, 6, 0]}
-          rotation={[Math.PI / 2, 0, 0]}
-          scale={[12, 8, 1]}
+      <CabinLighting />
+      {bakeLighting ? (
+        <RealtimeEnvironment />
+      ) : (
+        <CabinEnvironment
+          onReady={setEnvironmentReadyCallback}
+          fallback={<RealtimeEnvironment />}
         />
-        <Lightformer
-          intensity={1}
-          color="#e6c6a1"
-          position={[-7, 2, 4]}
-          rotation={[0, Math.PI / 2, 0]}
-          scale={[5, 4, 1]}
-        />
-      </Environment>
+      )}
+      {import.meta.env.DEV &&
+        new URLSearchParams(window.location.search).has('bakeLighting') && (
+          <BakeEnvironment />
+        )}
       <CelestialBackdrop
+        arrivalMotion={arrivalMotion}
         body={props.body}
         reduced={props.reduced || props.frozen || !!props.section}
         lowEffects={props.lowEffects}
       />
-      <CabinLife paused={props.reduced || props.frozen || !!props.section} />
-      <CabinShell body={props.body} />
-      <PlanetTreatment body={props.body} lowEffects={props.lowEffects} />
-      <IntegratedWorkbench />
-      <ReadingNook />
-      <PersonalDetails />
-      <WallDecor />
-      <ContactShadows
-        position={[0, 0.018, 0]}
-        frames={1}
-        opacity={0.3}
-        scale={16}
-        blur={2.4}
-        far={4}
-        resolution={256}
-        color="#594132"
+      <CabinLife
+        paused={!prepared || props.reduced || props.frozen || !!props.section}
+        docked={props.docked}
+        attention={props.attention}
+        onDock={props.onDock}
       />
+      <Arrival
+        motion={arrivalMotion}
+        body={props.body}
+        paused={props.frozen || !!props.section}
+        reduced={props.reduced}
+        onPhase={props.onArrivalPhase}
+        onSettled={props.onArrived}
+      />
+      {bakeCabin ? (
+        <StaticCabinSource />
+      ) : (
+        <StaticCabin onReady={onStaticReady} />
+      )}
+      {import.meta.env.DEV &&
+        new URLSearchParams(window.location.search).has('bakeCabin') && (
+          <BakeStaticCabin />
+        )}
+      <CabinDestinationDecor body={props.body} />
+      <PlanetTreatment body={props.body} lowEffects={props.lowEffects} />
+      <PersonalWallPrint
+        personalNote={props.personalNote}
+        onDiscover={props.onDiscover}
+      />
+      {staticReady && environmentReady && <GroundShadow />}
+      <RoomObject
+        id="destinations"
+        labelNodes={props.labelNodes}
+        labelBottom={props.labelBottom}
+        at={[2.6, 1.25, -2.5]}
+        labelAt={[0, 0.2, 0.75]}
+        canSelect={available}
+        motion={!props.reduced}
+        dragged={dragged}
+        onActivate={props.onMap}
+      >
+        <NavigationChart />
+      </RoomObject>
       <RoomObject
         labelNodes={props.labelNodes}
         labelBottom={props.labelBottom}
+        onAttention={props.onAttention}
         id="noclash"
         at={[-0.8, 1.35, 0.35]}
         scale={1.03}
@@ -325,15 +418,26 @@ function Scene(props: Props & { labelNodes: LabelNodes }) {
         dragged={dragged}
         onActivate={() => props.onSelect('work', 'noclash')}
       >
-        <NavigationPlanner
-          active={props.activeProject === 'noclash'}
-          demo={props.demo}
-          reduced={props.reduced || props.frozen || !!props.section}
-        />
+        {projectModels ? (
+          <PreparedProject
+            id="noclash"
+            model={projectModels['noclash']}
+            active={props.activeProject === 'noclash'}
+            demo={props.demo}
+            reduced={props.reduced || props.frozen || !!props.section}
+          />
+        ) : bakeCabin || staticReady ? (
+          <NavigationPlanner
+            active={props.activeProject === 'noclash'}
+            demo={props.demo}
+            reduced={props.reduced || props.frozen || !!props.section}
+          />
+        ) : null}
       </RoomObject>
       <RoomObject
         labelNodes={props.labelNodes}
         labelBottom={props.labelBottom}
+        onAttention={props.onAttention}
         id="student-portal"
         at={[-4.12, 1.42, -2.85]}
         scale={1.06}
@@ -344,15 +448,26 @@ function Scene(props: Props & { labelNodes: LabelNodes }) {
         dragged={dragged}
         onActivate={() => props.onSelect('work', 'student-portal')}
       >
-        <ResourceArchive
-          active={props.activeProject === 'student-portal'}
-          demo={props.demo}
-          reduced={props.reduced || props.frozen || !!props.section}
-        />
+        {projectModels ? (
+          <PreparedProject
+            id="student-portal"
+            model={projectModels['student-portal']}
+            active={props.activeProject === 'student-portal'}
+            demo={props.demo}
+            reduced={props.reduced || props.frozen || !!props.section}
+          />
+        ) : bakeCabin || staticReady ? (
+          <ResourceArchive
+            active={props.activeProject === 'student-portal'}
+            demo={props.demo}
+            reduced={props.reduced || props.frozen || !!props.section}
+          />
+        ) : null}
       </RoomObject>
       <RoomObject
         labelNodes={props.labelNodes}
         labelBottom={props.labelBottom}
+        onAttention={props.onAttention}
         id="noterm"
         at={[3.7, 1.255, 0.65]}
         scale={0.98}
@@ -363,11 +478,21 @@ function Scene(props: Props & { labelNodes: LabelNodes }) {
         dragged={dragged}
         onActivate={() => props.onSelect('work', 'noterm')}
       >
-        <MaintenanceTerminal
-          active={props.activeProject === 'noterm'}
-          demo={props.demo}
-          reduced={props.reduced || props.frozen || !!props.section}
-        />
+        {projectModels ? (
+          <PreparedProject
+            id="noterm"
+            model={projectModels['noterm']}
+            active={props.activeProject === 'noterm'}
+            demo={props.demo}
+            reduced={props.reduced || props.frozen || !!props.section}
+          />
+        ) : bakeCabin || staticReady ? (
+          <MaintenanceTerminal
+            active={props.activeProject === 'noterm'}
+            demo={props.demo}
+            reduced={props.reduced || props.frozen || !!props.section}
+          />
+        ) : null}
       </RoomObject>
       <RoomObject
         labelNodes={props.labelNodes}
@@ -409,7 +534,7 @@ function Scene(props: Props & { labelNodes: LabelNodes }) {
         motion={!props.reduced && !props.frozen}
         canSelect={available}
         dragged={dragged}
-        onActivate={() => props.onSelect('contact')}
+        onActivate={props.onRadio}
       >
         <ContactRadio />
       </RoomObject>
@@ -418,6 +543,7 @@ function Scene(props: Props & { labelNodes: LabelNodes }) {
 }
 export default function Room(props: Props) {
   const [visible, setVisible] = useState(true);
+  const [attention, setAttention] = useState<string | null>(null);
   const labelNodes = useRef<
     Record<string, HTMLButtonElement | HTMLAnchorElement | null>
   >({});
@@ -435,12 +561,22 @@ export default function Room(props: Props) {
         camera={{ position: [0.25, 3.1, 8.4], fov: 49, near: 0.1, far: 180 }}
         gl={{ antialias: true, alpha: false }}
         onCreated={({ gl }) => {
+          gl.domElement.dataset.parallelCompile = String(
+            gl.extensions.has('KHR_parallel_shader_compile'),
+          );
           gl.toneMapping = THREE.ACESFilmicToneMapping;
           gl.toneMappingExposure = 1.05;
           gl.domElement.style.cursor = 'grab';
         }}
       >
-        <Scene {...props} labelNodes={labelNodes} />
+        <SceneResources>
+          <Scene
+            {...props}
+            labelNodes={labelNodes}
+            attention={attention}
+            onAttention={setAttention}
+          />
+        </SceneResources>
       </Canvas>
       <div className="room-label-layer">
         {labels.map((label) =>
@@ -474,16 +610,31 @@ export default function Room(props: Props) {
               data-object={label.id}
               style={{ visibility: 'hidden' }}
               onPointerDown={(e) => e.stopPropagation()}
+              aria-pressed={
+                label.id === 'contact' ? props.audioEnabled : undefined
+              }
+              onMouseEnter={() => setAttention(label.id)}
+              onMouseLeave={() => setAttention(null)}
+              onFocus={() => setAttention(label.id)}
+              onBlur={() => setAttention(null)}
               onClick={() =>
-                props.onSelect(
-                  label.section,
-                  'project' in label ? label.project : undefined,
-                )
+                label.id === 'destinations'
+                  ? props.onMap()
+                  : label.id === 'contact'
+                    ? props.onRadio()
+                    : props.onSelect(
+                        label.section,
+                        'project' in label ? label.project : undefined,
+                      )
               }
               tabIndex={props.section ? -1 : 0}
             >
               <span>
-                {label.title}
+                {label.id === 'contact'
+                  ? props.audioEnabled
+                    ? 'Mute radio'
+                    : 'Cabin radio'
+                  : label.title}
                 <b>↗</b>
               </span>
               <small>{label.detail}</small>

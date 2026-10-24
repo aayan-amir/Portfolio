@@ -5,7 +5,14 @@ import { Block, Arc } from './Primitives';
 import { cabin } from './CabinShell';
 
 type PrintKind =
-  'saturn' | 'orbits' | 'rocket' | 'note' | 'patch' | 'moon' | 'constellation';
+  | 'saturn'
+  | 'orbits'
+  | 'rocket'
+  | 'note'
+  | 'patch'
+  | 'moon'
+  | 'constellation'
+  | 'personal';
 function drawPrint(kind: PrintKind) {
   const canvas = document.createElement('canvas');
   canvas.width = 512;
@@ -35,7 +42,14 @@ function drawPrint(kind: PrintKind) {
     c.font = `500 ${size}px sans-serif`;
     c.fillText(value, x, y);
   };
-  if (kind === 'moon') {
+  if (kind === 'personal') {
+    text('Off the', 38, 100, 58);
+    text('clock', 38, 170, 58);
+    ['Music.', 'Aviation.', 'Games.', 'Astronomy.'].forEach((line, i) =>
+      text(line, 38, 300 + i * 83, 43),
+    );
+    text('Click to return to the Moon.', 38, 710, 23);
+  } else if (kind === 'moon') {
     text('Lunar', 38, 88, 64);
     text('studies', 38, 155, 64);
     c.fillStyle = ink;
@@ -226,7 +240,9 @@ function Print({
   width,
   height,
   rotation = [0, 0, 0],
+  onActivate,
 }: {
+  onActivate?: () => void;
   kind: PrintKind;
   at: [number, number, number];
   width: number;
@@ -234,7 +250,7 @@ function Print({
   rotation?: [number, number, number];
 }) {
   const [map, setMap] = useState<THREE.Texture | null>(null);
-  const { invalidate } = useThree();
+  const { invalidate, gl } = useThree();
   useEffect(() => {
     const t = drawPrint(kind);
     setMap(t);
@@ -242,7 +258,33 @@ function Print({
     return () => t.dispose();
   }, [kind, invalidate]);
   return (
-    <group position={at} rotation={rotation}>
+    <group
+      position={at}
+      rotation={rotation}
+      onPointerOver={
+        onActivate
+          ? () => {
+              gl.domElement.style.cursor = 'pointer';
+            }
+          : undefined
+      }
+      onPointerOut={
+        onActivate
+          ? () => {
+              gl.domElement.style.cursor = 'grab';
+            }
+          : undefined
+      }
+      onClick={
+        onActivate
+          ? (e) => {
+              if (e.delta > 6) return;
+              e.stopPropagation();
+              onActivate();
+            }
+          : undefined
+      }
+    >
       {kind !== 'patch' && (
         <Block
           at={[0, 0, -0.035]}
@@ -273,7 +315,15 @@ function Print({
     </group>
   );
 }
-export function WallDecor() {
+export function WallDecor({
+  includePersonal = true,
+  personalNote,
+  onDiscover,
+}: {
+  includePersonal?: boolean;
+  personalNote: boolean;
+  onDiscover: () => void;
+}) {
   return (
     <group>
       <Print
@@ -310,13 +360,12 @@ export function WallDecor() {
         height={1.77}
         rotation={[0, -Math.PI / 2, 0]}
       />
-      <Print
-        kind="moon"
-        at={[-6.4, 3.85, -1.3]}
-        width={1.2}
-        height={1.8}
-        rotation={[0, Math.PI / 2, 0]}
-      />
+      {includePersonal && (
+        <PersonalWallPrint
+          personalNote={personalNote}
+          onDiscover={onDiscover}
+        />
+      )}
       <Print
         kind="constellation"
         at={[-6.4, 3.65, 0.65]}
@@ -338,5 +387,24 @@ export function WallDecor() {
         color={cabin.orange}
       />
     </group>
+  );
+}
+
+export function PersonalWallPrint({
+  personalNote,
+  onDiscover,
+}: {
+  personalNote: boolean;
+  onDiscover: () => void;
+}) {
+  return (
+    <Print
+      kind={personalNote ? 'personal' : 'moon'}
+      onActivate={onDiscover}
+      at={[-6.4, 3.85, -1.3]}
+      width={1.2}
+      height={1.8}
+      rotation={[0, Math.PI / 2, 0]}
+    />
   );
 }
