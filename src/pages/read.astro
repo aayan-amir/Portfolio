@@ -1,0 +1,54 @@
+---
+import { profile, projects } from '../data/content';
+import '../styles/global.css';
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aayan Amir — Text portfolio</title>
+    <meta
+      name="description"
+      content="Aayan Amir’s software projects, approach, and contact information."
+    />
+  </head>
+  <body class="reading-page">
+    <main>
+      <a href="/">Return to the workshop</a>
+      <p class="eyebrow">The readable edition</p>
+      <h1>{profile.name}</h1>
+      <p class="lead">
+        Software developer building practical tools that make everyday work
+        easier.
+      </p>
+      <p>
+        Seeking backend and full-stack internships and junior roles. Open to
+        freelance conversations.
+      </p>
+      <h2>Selected work</h2>
+      {projects.map((project) => (
+        <article>
+          <p class="eyebrow">{project.category}</p>
+          <h3>{project.name}</h3>
+          <p>{project.problem}</p>
+          <p>{project.solution}</p>
+          {project.url && <a href={project.url}>Visit live project</a>}{' '}
+          {project.source && <a href={project.source}>Source code</a>}
+        </article>
+      ))}
+      <h2>How I work</h2>
+      <p>
+        I start with repetitive tasks and look for a practical way to make them
+        easier. I use AI tools to help with development, review the output, and
+        check what I ship.
+      </p>
+      <h2>Contact</h2>
+      <p>
+        <a href={`mailto:${profile.email}`}>{profile.email}</a>
+      </p>
+      <a href={profile.github}>GitHub</a>
+    </main>
+  </body>
+</html>
