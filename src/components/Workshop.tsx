@@ -1,3 +1,6 @@
+import '../styles/inhabited-room.css';
+import '../styles/quiet-ship.css';
+import { bodies, type BodyId } from '../data/celestial';
 import {
   lazy,
   Suspense,
@@ -8,6 +11,7 @@ import {
   type ReactNode,
 } from 'react';
 import { profile, projects } from '../data/content';
+import { resume } from '../data/resume';
 import {
   readDestination,
   destinationSearch,
@@ -41,7 +45,30 @@ export default function Workshop() {
   const [destination, setDestination] = useState<Destination>({
     section: null,
     project: null,
+    body: 'earth',
   });
+  const [pendingProject, setPendingProject] = useState<ProjectId | null>(null);
+  const [demo, setDemo] = useState(0);
+  const openingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  function cancelOpening() {
+    if (openingTimer.current !== null) clearTimeout(openingTimer.current);
+    openingTimer.current = null;
+    setPendingProject(null);
+  }
+  useEffect(() => {
+    const cancel = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') cancelOpening();
+    };
+    window.addEventListener('keydown', cancel);
+    window.addEventListener('popstate', cancelOpening);
+    return () => {
+      if (openingTimer.current !== null) clearTimeout(openingTimer.current);
+      window.removeEventListener('keydown', cancel);
+      window.removeEventListener('popstate', cancelOpening);
+    };
+  }, []);
+  const [look, setLook] = useState(0);
+  const [lowEffects, setLowEffects] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
   const [staticView, setStaticView] = useState(false);
@@ -75,14 +102,19 @@ export default function Workshop() {
     }
     if (!destination.section && element.open) {
       element.close();
-      restoreFocus.current?.focus();
+      if (restoreFocus.current?.isConnected) restoreFocus.current.focus();
+      else
+        document
+          .querySelector<HTMLButtonElement>('.ship-header button')
+          ?.focus();
     }
   }, [destination.section]);
   const navigate = (
     section: Section | null,
     project: ProjectId | null = null,
   ) => {
-    const next = { section, project };
+    cancelOpening();
+    const next = { ...destination, section, project };
     setDestination(next);
     const nextUrl = window.location.pathname + destinationSearch(next);
     if (nextUrl !== window.location.pathname + window.location.search)
@@ -94,6 +126,47 @@ export default function Workshop() {
         ?.querySelector<HTMLElement>('#panel-title')
         ?.focus({ preventScroll: true });
   }, [destination.section, destination.project]);
+  function chooseBody(body: BodyId) {
+    cancelOpening();
+    const next = { ...destination, body };
+    setDestination(next);
+    if (body !== destination.body)
+      window.history.pushState(
+        null,
+        '',
+        window.location.pathname + destinationSearch(next),
+      );
+  }
+  function sceneSelect(section: Section, project?: ProjectId) {
+    cancelOpening();
+    if (
+      section === 'work' &&
+      project &&
+      !reduced &&
+      !lowEffects &&
+      !staticView
+    ) {
+      setPendingProject(project);
+      setDemo((value) => value + 1);
+      openingTimer.current = setTimeout(() => navigate(section, project), 650);
+    } else navigate(section, project ?? null);
+  }
+  const destinationControl = (
+    <label className="destination-control">
+      Destinations
+      <select
+        aria-label="Choose destination"
+        value={destination.body}
+        onChange={(e) => chooseBody(e.target.value as BodyId)}
+      >
+        {bodies.map((b) => (
+          <option key={b.id} value={b.id}>
+            {b.name}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
   const capture =
     mounted &&
     import.meta.env.DEV &&
@@ -109,107 +182,122 @@ export default function Workshop() {
   }
   return (
     <main
-      className={`workshop${capture ? ' capture-room' : ''}`}
+      className={`workshop quiet-ship inhabited-room${capture ? ' capture-room' : ''}`}
       id="main"
       data-ready={ready}
+      data-body={destination.body}
+      data-low-effects={lowEffects}
+      style={
+        {
+          '--body-color': bodies.find((b) => b.id === destination.body)?.color,
+        } as import('react').CSSProperties
+      }
     >
       <a className="skip-link" href="/read">
         Read the text portfolio
       </a>
-      <div
-        className="room-poster"
-        aria-hidden="true"
-        style={{ backgroundImage: 'url(/workshop-poster.webp)' }}
-      />
-      {mounted && !staticView && !failed && (
+      <div className="room-poster" aria-hidden="true" />
+      {mounted && !failed && (
         <SceneBoundary onError={() => setFailed(true)}>
           <Suspense fallback={null}>
             <Room
+              labelBottom={null}
+              look={look}
               section={destination.section}
               project={destination.project}
-              reduced={reduced}
+              activeProject={pendingProject ?? destination.project}
+              demo={demo}
+              body={destination.body}
+              reduced={reduced || lowEffects || staticView}
+              lowEffects={lowEffects}
+              frozen={staticView}
               reset={reset}
-              onSelect={navigate}
+              onSelect={sceneSelect}
               onReady={() => setReady(true)}
               onFailure={() => setFailed(true)}
             />
           </Suspense>
         </SceneBoundary>
       )}
+      <span className="sr-only" role="status">
+        {pendingProject
+          ? `Opening ${projects.find((item) => item.id === pendingProject)?.name} case study`
+          : ''}
+      </span>
       <div className="vignette" aria-hidden="true" />
-      <header className="site-header">
-        <a className="wordmark" href="/" aria-label="Aayan Amir, workshop home">
-          aa<span>.</span>
-        </a>
-        <span className="header-caption">A small space for useful ideas.</span>
-        <a className="availability" href="mailto:aayanwork1@gmail.com">
-          <i />
-          Open to opportunities
-        </a>
-      </header>
-      <section className="identity" aria-label="Introduction">
-        <p className="eyebrow">Software developer · Karachi, Pakistan</p>
-        <h1>
-          Aayan
-          <br />
-          Amir<span>.</span>
+      <header className="ship-header">
+        <h1 className="ship-title">
+          <a className="ship-name" href="/">
+            Aayan Amir<span>Software developer</span>
+          </a>
         </h1>
-        <p className="intro-copy">
-          A curious mind.
-          <br />A practical approach.
-        </p>
-        <p className="role-copy">
-          Building tools that make everyday work easier.
-          <br />
-          Seeking backend & full-stack internships and junior roles.
-        </p>
-        <button className="intro-link" onClick={() => navigate('work')}>
-          Take a look at my work <span>↗</span>
-        </button>
-      </section>
-      <div className="room-caption">
-        <span className="tiny-cross">+</span>
-        <div>
-          <strong>The orbital workshop</strong>
-          <span>
-            {failed
-              ? 'Text view is available below.'
-              : staticView
-                ? 'Still view · take your time.'
-                : !ready
-                  ? 'Preparing your little corner of orbit…'
-                  : 'Look around. Pick something that catches your eye.'}
-          </span>
-        </div>
-      </div>
-      <footer className="room-footer">
-        <div className="coordinates">
-          24° 51′ N &nbsp; 67° 00′ E<span>Made with curiosity, on Earth.</span>
-        </div>
-        <nav className="main-nav" aria-label="Portfolio">
-          <button onClick={() => navigate('about')}>About</button>
+        <nav aria-label="Portfolio">
           <button onClick={() => navigate('work')}>Work</button>
-          <button onClick={() => navigate('experience')}>Approach</button>
-          <button onClick={() => navigate('contact')}>
-            Contact <span>↗</span>
-          </button>
+          <button onClick={() => navigate('about')}>About</button>
+          <a
+            className="resume-shortcut"
+            href={resume.url}
+            download={resume.filename}
+          >
+            Download résumé
+          </a>
+          <button onClick={() => navigate('contact')}>Contact ↗</button>
         </nav>
-        <div className="view-controls">
-          <button
-            title="Reset camera"
-            onClick={() => setReset((value) => value + 1)}
-            aria-label="Reset camera view"
-          >
-            ↺
-          </button>
-          <button
-            onClick={() => setStaticView((value) => !value)}
-            aria-pressed={staticView}
-          >
-            {staticView ? 'Enable 3D' : 'Still view'}
-          </button>
-          <a href="/read">Text view</a>
-        </div>
+      </header>
+      <div className="room-welcome">
+        <span>Welcome to my corner of orbit.</span>
+        <p>
+          Useful software.
+          <br />A curious mind.
+        </p>
+        <small>Backend & full-stack internships / junior roles</small>
+      </div>
+      <div
+        className="look-actions"
+        role="group"
+        aria-label="Look around the room"
+      >
+        <button aria-label="Look left" onClick={() => setLook((v) => v - 1)}>
+          ←
+        </button>
+        <span>Look around</span>
+        <button aria-label="Look right" onClick={() => setLook((v) => v + 1)}>
+          →
+        </button>
+      </div>
+      <div className="destination-forward">{destinationControl}</div>
+      <footer className="ship-footer">
+        <span className="scene-hint">
+          {failed
+            ? '3D unavailable · text view is ready'
+            : !ready
+              ? 'Preparing the engineering cabin…'
+              : staticView
+                ? 'Still view · select an object to explore'
+                : 'Select an instrument to explore a project'}
+        </span>
+        <details className="ship-settings">
+          <summary>View & destinations</summary>
+          <div className="settings-content">
+            <button
+              aria-pressed={lowEffects}
+              onClick={() => setLowEffects((v) => !v)}
+            >
+              Reduced effects
+            </button>
+            <button
+              aria-pressed={staticView}
+              onClick={() => setStaticView((v) => !v)}
+            >
+              {staticView ? 'Enable movement' : 'Still view'}
+            </button>
+            <button onClick={() => setReset((v) => v + 1)}>
+              Reset camera view
+            </button>
+            <a href="/read">Text portfolio ↗</a>
+            <a href="/read#credits">Scene credits</a>
+          </div>
+        </details>
       </footer>
       <dialog
         ref={dialog}
@@ -224,9 +312,10 @@ export default function Workshop() {
         }}
       >
         <div className="panel-shell">
+          <div className="panel-destination">{destinationControl}</div>
           <div className="panel-top">
             <span className="panel-location">
-              Aayan’s workshop /{' '}
+              Aayan’s engineering cabin /{' '}
               {destination.section && names[destination.section]}
             </span>
             <button
@@ -254,8 +343,8 @@ export default function Workshop() {
                 <p>
                   I’m a software developer in Karachi, looking for backend and
                   full-stack internships and junior roles. My work includes
-                  tools for inventory keeping, outreach records, and student
-                  scheduling.
+                  student scheduling, moderated resource sharing, and desktop
+                  tools for Linux.
                 </p>
                 <p>
                   I’m drawn to practical problems: understanding the task,
@@ -286,7 +375,8 @@ export default function Workshop() {
                   thoughtfully built<span>.</span>
                 </h2>
                 <p className="panel-lead">
-                  From a student’s timetable to a company’s everyday records.
+                  Scheduling, shared knowledge, and making Linux more
+                  approachable.
                 </p>
                 <div className="project-list">
                   {projects.map((item, index) => (
@@ -397,14 +487,24 @@ export default function Workshop() {
             )}
             {destination.section === 'experience' && (
               <>
-                <p className="eyebrow">How I approach the work</p>
+                <p className="eyebrow">Experience & approach</p>
                 <h2 id="panel-title" tabIndex={-1}>
-                  Understand.
+                  Practical work.
                   <br />
-                  Build. Refine<span>.</span>
+                  Thoughtful process<span>.</span>
                 </h2>
                 <p className="panel-lead">
                   The stack is a tool. The problem is the starting point.
+                </p>
+                <p>
+                  I'm Aayan, a software developer in Karachi seeking backend and
+                  full-stack internships and junior roles. Alongside these
+                  projects, I've built in-house software to move repetitive
+                  inventory and outreach record keeping online.
+                </p>
+                <p>
+                  I care about understanding the task, reviewing the details,
+                  and building something that helps the person doing the work.
                 </p>
                 <div className="approach-step">
                   <span>Understand the task</span>
@@ -466,9 +566,10 @@ export default function Workshop() {
                   </a>
                   <a
                     className="outline-button"
-                    href={`mailto:${profile.email}?subject=Resume%20request`}
+                    href={resume.url}
+                    download={resume.filename}
                   >
-                    Request résumé ↗
+                    Download résumé ↗
                   </a>
                 </div>
                 <p className="contact-footnote" role="status">

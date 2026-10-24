@@ -1,0 +1,313 @@
+/* Calm observation deck: one active exhibit, quiet architecture. */
+.quiet-ship {
+  height: 100svh;
+  min-height: 600px;
+  color: #e0e7e9;
+  background: #080f1a;
+}
+.quiet-ship .vignette {
+  background: linear-gradient(
+    180deg,
+    #08101a66,
+    transparent 23%,
+    transparent 60%,
+    #0b1721e6 95%
+  );
+}
+.ship-header {
+  position: absolute;
+  top: 32px;
+  left: 48px;
+  right: 48px;
+  z-index: 3;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 24px;
+}
+.ship-name {
+  font-family: 'Manrope Variable', sans-serif;
+  font-size: 25px;
+  font-weight: 550;
+  letter-spacing: -1px;
+  color: #f1f3ee;
+}
+.ship-name span {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: #a9bac3;
+  margin-top: 5px;
+}
+.ship-header nav {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+}
+.ship-header nav button {
+  background: none;
+  border: 0;
+  color: #b9c9d1;
+  font-size: 12px;
+  padding: 12px 0;
+}
+.ship-header nav button:hover {
+  color: #fff;
+}
+.ship-intro {
+  position: absolute;
+  top: 155px;
+  left: 48px;
+  z-index: 3;
+  pointer-events: none;
+}
+.ship-intro p {
+  font-size: clamp(22px, 2.2vw, 34px);
+  letter-spacing: -1px;
+  line-height: 1.35;
+  font-weight: 400;
+  margin: 0 0 16px;
+  color: #d2dce0;
+}
+.ship-intro span {
+  font-size: 11px;
+  color: #9baeb9;
+}
+.exhibit-caption {
+  position: absolute;
+  z-index: 3;
+  bottom: 83px;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  width: min(500px, 95vw);
+}
+.project-choices {
+  display: flex;
+  justify-content: center;
+  gap: 26px;
+  border-bottom: 1px solid #71828c35;
+}
+.project-choices button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  padding: 13px 0;
+  background: transparent;
+  color: #9caeb8;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.project-choices button[aria-pressed='true'] {
+  color: #f2f1e8;
+  border-bottom-color: #b8cdd2;
+}
+.project-choices button:hover {
+  color: #fff;
+}
+.exhibit-summary {
+  font-size: 12px;
+  color: #aebfc7;
+  margin: 15px 0 12px;
+}
+.read-project {
+  display: inline-flex;
+  align-items: center;
+  gap: 25px;
+  background: #d2dedf;
+  border: 0;
+  border-radius: 4px;
+  color: #203540;
+  font-size: 12px;
+  padding: 12px 18px;
+  min-height: 42px;
+}
+.read-project:hover {
+  background: #edf4f3;
+}
+.ship-footer {
+  position: absolute;
+  z-index: 4;
+  bottom: 25px;
+  left: 48px;
+  right: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.scene-hint {
+  font-size: 10px;
+  color: #a2b4bf;
+}
+.ship-settings {
+  position: relative;
+  font-size: 11px;
+}
+.ship-settings summary {
+  cursor: pointer;
+  list-style: none;
+  color: #c1cdd3;
+  padding: 12px 0;
+}
+.ship-settings summary::after {
+  content: ' +';
+  margin-left: 14px;
+}
+.ship-settings[open] summary::after {
+  content: ' −';
+}
+.settings-content {
+  position: absolute;
+  bottom: 48px;
+  right: 0;
+  background: #172832;
+  border: 1px solid #4b626d;
+  border-radius: 9px;
+  padding: 18px;
+  width: 260px;
+  display: grid;
+  gap: 10px;
+  box-shadow: 0 12px 40px #0005;
+}
+.settings-content button,
+.settings-content a {
+  border: 1px solid #526975;
+  background: #263d49;
+  padding: 10px;
+  border-radius: 4px;
+  text-align: left;
+  color: #e0e8eb;
+  font-size: 12px;
+}
+.settings-content button[aria-pressed='true'] {
+  border-color: #b3cbd2;
+  background: #3b5662;
+}
+.quiet-ship .info-dialog {
+  color: #293e45;
+}
+.quiet-ship .panel-shell {
+  background: #eef1ed;
+}
+.quiet-ship .panel-destination {
+  background: #dce5e3;
+}
+.quiet-ship .info-dialog h2:focus {
+  outline: none;
+}
+.quiet-ship .info-dialog::backdrop {
+  background: #030c1459;
+  backdrop-filter: blur(3px);
+}
+.quiet-ship .room-canvas::after {
+  display: none;
+}
+@media (min-width: 1000px) {
+  .quiet-ship .info-dialog {
+    margin: 18px 22px 18px auto;
+    width: 510px;
+    height: calc(100svh - 36px);
+    max-height: none;
+  }
+  .quiet-ship .panel-shell {
+    height: 100%;
+  }
+}
+@media (max-width: 700px) {
+  .ship-header {
+    left: 24px;
+    right: 24px;
+    top: 24px;
+  }
+  .ship-header nav {
+    gap: 16px;
+  }
+  .ship-header nav button {
+    font-size: 11px;
+  }
+  .ship-header nav button:nth-child(3) {
+    display: none;
+  }
+  .ship-name {
+    font-size: 22px;
+  }
+  .ship-intro {
+    top: 118px;
+    left: 24px;
+  }
+  .ship-intro p {
+    font-size: 23px;
+  }
+  .ship-intro span {
+    font-size: 10px;
+  }
+  .exhibit-caption {
+    bottom: 86px;
+    width: calc(100% - 48px);
+  }
+  .project-choices {
+    gap: 23px;
+  }
+  .project-choices button {
+    font-size: 12px;
+    padding: 13px 0;
+  }
+  .ship-footer {
+    left: 24px;
+    right: 24px;
+    bottom: 18px;
+    align-items: flex-end;
+  }
+  .scene-hint {
+    max-width: 145px;
+    font-size: 9px;
+    line-height: 1.6;
+  }
+  .ship-settings {
+    font-size: 10px;
+  }
+  .ship-settings summary {
+    padding: 10px 0;
+  }
+  .settings-content {
+    width: 250px;
+  }
+  .quiet-ship .vignette {
+    background: linear-gradient(
+      180deg,
+      #08101a77,
+      transparent 33%,
+      transparent 57%,
+      #0b1721f5 92%
+    );
+  }
+}
+@media (max-height: 650px) {
+  .quiet-ship {
+    min-height: 540px;
+  }
+  .ship-intro {
+    top: 95px;
+  }
+  .ship-intro p {
+    font-size: 20px;
+  }
+  .exhibit-caption {
+    bottom: 62px;
+  }
+  .exhibit-summary {
+    margin: 8px 0;
+  }
+  .ship-footer {
+    bottom: 10px;
+  }
+}
+
+.ship-title {
+  margin: 0;
+  font-size: inherit;
+  line-height: 1.3;
+}

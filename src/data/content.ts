@@ -30,25 +30,27 @@ export const projects: {
     source: 'https://github.com/aayan-amir/NoClash',
   },
   {
-    id: 'inventory',
-    name: 'Inventory tools',
-    category: 'In-house software',
-    summary: 'Making stock keeping easier to keep up with.',
+    id: 'student-portal',
+    name: 'Student Portal',
+    category: 'Full-stack web application',
+    summary: 'Shared resources. A considered review process.',
     problem:
-      'Manual inventory keeping creates repetitive administrative work and makes records harder to maintain.',
+      'Class notes, links, and files need a shared home without every submission going straight to everyone.',
     solution:
-      'I developed software to move inventory record keeping online and support the people doing that work. A fuller case study will use approved company screenshots.',
-    tags: ['Business workflows', 'Record keeping'],
+      'A classroom resource portal with pending submissions, administrator approval and rejection, and access to approved files. The repository describes PostgreSQL data storage, Cloudinary uploads, cookie-based admin authentication, and an optional Android wrapper.',
+    tags: ['ASP.NET Core MVC', '.NET 10', 'PostgreSQL', 'Moderation'],
+    source: 'https://github.com/aayan-amir/StudentPortal',
   },
   {
-    id: 'outreach',
-    name: 'Outreach records',
-    category: 'In-house software',
-    summary: 'Keeping track of the conversations that matter.',
+    id: 'noterm',
+    name: 'NoTerm',
+    category: 'Linux desktop application',
+    summary: 'Find the task. Understand the command.',
     problem:
-      'Keeping records of clients contacted was another repetitive task that needed a more organized workflow.',
+      'Common Linux tasks can require remembering commands, parameters, and the consequences of running them.',
     solution:
-      'I built software to bring those outreach records online. This work focuses on practical internal tools rather than a public-facing demo.',
-    tags: ['Internal tools', 'Client records'],
+      'An Avalonia command center with 66 predefined actions, intent search, validated parameters, command previews, risk confirmations, and execution output. Its optional PostgreSQL catalog has a built-in fallback. Designed for Linux and Ubuntu; available actions depend on installed system tools.',
+    tags: ['C#', 'Avalonia', '.NET 8', 'Linux'],
+    source: 'https://github.com/aayan-amir/NOtoTERMINAL',
   },
 ];

@@ -920,3 +920,190 @@ h2 span {
     font-size: 20px;
   }
 }
+
+/* Observatory: keep the room warm and the surrounding universe open. */
+.workshop {
+  background: #050c19;
+}
+.vignette {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(4, 12, 24, 0.8),
+      rgba(4, 12, 24, 0.3) 29%,
+      transparent 55%
+    ),
+    linear-gradient(0deg, rgba(4, 12, 24, 0.85), transparent 26%);
+}
+.site-header,
+.identity,
+.room-caption,
+.coordinates,
+.view-controls {
+  color: #eef2ed;
+}
+.header-caption,
+.identity .eyebrow,
+.role-copy,
+.room-caption div > span,
+.coordinates span,
+.tiny-cross {
+  color: #c1d0d8;
+}
+.identity h1 span {
+  color: #d9ac73;
+}
+.identity {
+  top: 19%;
+}
+.identity h1 {
+  font-size: clamp(65px, 6.6vw, 100px);
+}
+.destination-dock {
+  position: absolute;
+  z-index: 4;
+  right: 42px;
+  top: 104px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  max-width: 340px;
+  color: #e5eff3;
+}
+.destination-control {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+.destination-control select,
+.destination-dock button {
+  font: inherit;
+  border: 1px solid #7d959f;
+  border-radius: 8px;
+  background: #122433;
+  color: #edf3f5;
+  padding: 10px;
+  cursor: pointer;
+}
+.destination-dock button {
+  font-size: 11px;
+}
+.destination-dock button[aria-pressed='true'] {
+  background: #365c68;
+}
+.destination-dock > span {
+  width: 100%;
+  font-size: 11px;
+  color: #b8cdd6;
+}
+.panel-destination {
+  padding: 12px 24px;
+  background: #e0e6e1;
+}
+select:focus-visible {
+  outline: 3px solid #e5b878;
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .destination-dock {
+    top: 76px;
+    right: 20px;
+    left: 20px;
+    max-width: none;
+    justify-content: flex-end;
+  }
+  .destination-dock > span {
+    display: none;
+  }
+  .identity {
+    top: 150px;
+  }
+  .identity h1 {
+    font-size: 62px;
+  }
+  .identity .intro-copy {
+    font-size: 16px;
+  }
+  .identity .role-copy {
+    max-width: 235px;
+  }
+  .vignette {
+    background:
+      linear-gradient(90deg, rgba(4, 12, 24, 0.65), transparent 90%),
+      linear-gradient(0deg, rgba(4, 12, 24, 0.9), transparent 35%);
+  }
+}
+
+.view-controls button,
+.view-controls a {
+  color: #dce8ed;
+}
+@media (max-width: 600px) {
+  .room-caption {
+    background: rgba(10, 27, 40, 0.9);
+    border-color: #4b626c;
+  }
+  .room-caption div > span {
+    color: #c5d6df;
+  }
+  .identity .role-copy {
+    font-size: 10px;
+  }
+  .identity .intro-copy {
+    margin-bottom: 8px;
+  }
+  .identity h1 {
+    margin-bottom: 14px;
+  }
+  .identity .intro-link {
+    margin-top: 0;
+  }
+  .identity {
+    max-width: 235px;
+  }
+  .availability {
+    color: #20382e;
+  }
+  .room-footer {
+    gap: 12px;
+  }
+  .view-controls {
+    opacity: 1;
+  }
+}
+
+.room-poster {
+  background:
+    radial-gradient(
+      circle at 72% 30%,
+      var(--body-color) 0,
+      #15334a 22%,
+      transparent 22.4%
+    ),
+    radial-gradient(ellipse at top, #142a41, #050c19 70%) !important;
+}
+.workshop[data-body='neptune'][data-low-effects='false'] .room-canvas::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 70px #a4dff02b;
+  border: 1px solid #bceeff36;
+  background: linear-gradient(
+    125deg,
+    #c8f2ff15,
+    transparent 16%,
+    transparent 84%,
+    #c8f2ff15
+  );
+}
+.destination-control select {
+  transition: border-color 0.2s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .destination-control select {
+    transition: none;
+  }
+}

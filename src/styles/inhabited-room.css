@@ -1,0 +1,486 @@
+.inhabited-room {
+  --warm-paper: #dce1d5;
+}
+.inhabited-room .ship-header {
+  z-index: 15;
+}
+.inhabited-room .ship-header nav a {
+  font-size: 12px;
+  padding: 12px 0;
+  color: #d1d9d9;
+}
+.inhabited-room .ship-header nav {
+  background: linear-gradient(180deg, #07131bc9, #07131b26);
+  border-radius: 6px;
+  padding: 0 12px;
+}
+.room-welcome {
+  position: absolute;
+  top: 118px;
+  left: 48px;
+  z-index: 3;
+  pointer-events: none;
+  max-width: 280px;
+}
+.room-welcome > span {
+  font-size: 10px;
+  color: #c4d1ce;
+}
+.room-welcome p {
+  font-size: 25px;
+  line-height: 1.3;
+  font-weight: 400;
+  letter-spacing: -0.7px;
+  margin: 12px 0;
+  color: #e7e9df;
+}
+.room-welcome small {
+  font-size: 10px;
+  color: #b5c5c4;
+}
+.scene-label {
+  pointer-events: auto;
+  display: block;
+  min-width: 124px;
+  padding: 8px 12px;
+  text-align: left;
+  border: 1px solid #aec0b147;
+  border-radius: 5px;
+  background: #193138e8;
+  color: #edf0e5;
+  box-shadow: 0 4px 16px #06141b26;
+  white-space: nowrap;
+  font-family: 'DM Sans', sans-serif;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.scene-label > span {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.scene-label b {
+  font-size: 11px;
+  font-weight: 400;
+  color: #a9c2b3;
+}
+.scene-label small {
+  display: block;
+  font-size: 9px;
+  color: #b7c7bd;
+  line-height: 1.5;
+  margin-top: 2px;
+}
+.scene-label:hover,
+.scene-label:focus-visible,
+.scene-label.is-hovered {
+  background: #314d50;
+  border-color: #c6d9c5;
+}
+.inhabited-room .ship-footer {
+  z-index: 15;
+}
+.look-actions {
+  position: absolute;
+  bottom: 88px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  z-index: 12;
+  color: #c0cfca;
+}
+.look-actions span {
+  font-size: 10px;
+}
+.look-actions button {
+  width: 40px;
+  height: 36px;
+  border: 1px solid #a6b6a14d;
+  border-radius: 50%;
+  color: #d3e0d5;
+  background: #14282cbf;
+}
+.inhabited-room .vignette {
+  background: linear-gradient(
+    180deg,
+    #07131b77,
+    transparent 31%,
+    transparent 64%,
+    #0c1c23d9 100%
+  );
+}
+@media (max-width: 700px) {
+  .inhabited-room .ship-header {
+    left: 20px;
+    right: 20px;
+    gap: 10px;
+  }
+  .inhabited-room .ship-header nav {
+    gap: 12px;
+    padding: 0;
+    background: none;
+  }
+  .inhabited-room .ship-header nav button,
+  .inhabited-room .ship-header nav a {
+    font-size: 10px;
+  }
+  .inhabited-room .ship-header nav button:nth-child(2) {
+    display: none;
+  }
+  .inhabited-room .ship-header nav a {
+    max-width: 55px;
+    text-align: center;
+    line-height: 1.4;
+  }
+  .room-welcome {
+    top: 105px;
+    left: 24px;
+  }
+  .room-welcome p {
+    font-size: 21px;
+    margin: 8px 0;
+  }
+  .room-welcome small {
+    display: none;
+  }
+  .scene-label {
+    padding: 7px 9px;
+    min-width: 112px;
+  }
+  .scene-label > span {
+    font-size: 11px;
+    gap: 10px;
+  }
+  .scene-label small {
+    font-size: 8px;
+  }
+  .look-actions {
+    bottom: 82px;
+  }
+  .inhabited-room .ship-footer {
+    left: 20px;
+    right: 20px;
+  }
+  .inhabited-room .scene-hint {
+    max-width: 135px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scene-label {
+    transition: none;
+  }
+}
+
+.room-label-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 8;
+  overflow: hidden;
+}
+.room-label-layer .scene-label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
+}
+.inhabited-room .scene-label {
+  background: #1a3035e6;
+  border-color: #b5c2ac3d;
+}
+.inhabited-room .scene-label:hover {
+  background: #3a5554;
+}
+
+.look-actions button {
+  width: 44px;
+  height: 44px;
+}
+.inhabited-room .room-welcome {
+  max-width: 270px;
+}
+.inhabited-room .room-welcome p {
+  font-size: 24px;
+}
+@media (max-width: 700px) {
+  .inhabited-room .room-welcome p {
+    font-size: 21px;
+  }
+}
+
+.inhabited-room .scene-label {
+  background: #eee1c5ed;
+  border: 1px solid #b7a57bb3;
+  color: #294c44;
+  box-shadow: 0 4px 14px #493c251c;
+}
+.inhabited-room .scene-label small {
+  color: #5d6d57;
+}
+.inhabited-room .scene-label b {
+  color: #538979;
+}
+.inhabited-room .scene-label:hover,
+.inhabited-room .scene-label:focus-visible {
+  background: #fff0ce;
+  border-color: #d09458;
+}
+.inhabited-room .scene-label[data-object='noclash'] {
+  border-left: 3px solid #4e9b8e;
+}
+.inhabited-room .scene-label[data-object='student-portal'] {
+  border-left: 3px solid #cb7a61;
+}
+.inhabited-room .scene-label[data-object='noterm'] {
+  border-left: 3px solid #d2a34e;
+}
+.inhabited-room .ship-header nav {
+  background: #e8dcc3ed;
+  padding: 0 16px;
+  box-shadow: 0 3px 15px #2d1c1914;
+}
+.inhabited-room .ship-header nav button,
+.inhabited-room .ship-header nav a {
+  color: #31554b;
+}
+.inhabited-room .look-actions button {
+  background: #d8b974e8;
+  border-color: #f0d49f8c;
+  color: #294c44;
+}
+.inhabited-room .ship-settings summary {
+  color: #f1e3c0;
+}
+.inhabited-room .room-welcome > span {
+  color: #ebddbd;
+}
+@media (max-width: 700px) {
+  .inhabited-room .ship-header nav {
+    padding: 0 10px;
+    gap: 10px;
+    border-radius: 6px;
+  }
+  .inhabited-room .ship-header nav a {
+    max-width: 50px;
+  }
+}
+
+/* The room carries the introduction; keep secondary copy quiet. */
+.inhabited-room .room-welcome p {
+  display: none;
+}
+.inhabited-room .room-welcome > span {
+  display: block;
+  font-size: 12px;
+  text-shadow: 0 1px 5px #071719;
+}
+.inhabited-room .room-welcome small {
+  display: block;
+  margin-top: 8px;
+  font-size: 10px;
+  text-shadow: 0 1px 5px #071719;
+}
+@media (max-width: 700px) {
+  .inhabited-room .room-welcome small {
+    display: none;
+  }
+  .inhabited-room .room-welcome > span {
+    font-size: 11px;
+  }
+}
+
+/* Grounded nameplates replace the row of identical floating information cards. */
+.inhabited-room .scene-label {
+  min-width: 0;
+  padding: 8px 12px;
+  border-radius: 20px;
+  background: #eadbb9ed;
+  box-shadow: 0 2px 10px #4c39251a;
+}
+.inhabited-room .scene-label > span {
+  font-size: 11px;
+  gap: 13px;
+  line-height: 1.5;
+}
+.inhabited-room .scene-label small {
+  position: absolute;
+  top: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #f3e5c9;
+  color: #40584a;
+  padding: 7px 11px;
+  border-radius: 4px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+.inhabited-room .scene-label:hover small,
+.inhabited-room .scene-label:focus-visible small {
+  opacity: 1;
+}
+.inhabited-room .room-welcome {
+  top: 116px;
+}
+.inhabited-room .look-actions {
+  bottom: 72px;
+}
+@media (prefers-reduced-motion: reduce) {
+  .inhabited-room .scene-label small {
+    transition: none;
+  }
+}
+
+/* Stable contrast over the bright hull and every destination. */
+.inhabited-room .ship-header {
+  top: 20px;
+  left: 28px;
+  right: 28px;
+  padding: 15px 20px;
+  border: 1px solid #7eaaa33d;
+  border-radius: 12px;
+  background: #102b39f2;
+  box-shadow: 0 6px 28px #07131b24;
+}
+.inhabited-room .ship-header nav {
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+}
+.inhabited-room .ship-header nav button,
+.inhabited-room .ship-header nav a {
+  color: #e1e9e1;
+}
+.inhabited-room .ship-header nav button:hover,
+.inhabited-room .ship-header nav a:hover {
+  color: #f5c69b;
+}
+.inhabited-room .room-welcome {
+  top: 127px;
+  left: 48px;
+  padding: 11px 15px;
+  border-radius: 6px;
+  background: #102b39ed;
+}
+.inhabited-room .room-welcome > span {
+  color: #f0d4ae;
+  text-shadow: none;
+}
+.inhabited-room .room-welcome small {
+  color: #d1dfdb;
+  text-shadow: none;
+}
+.inhabited-room .scene-label {
+  min-height: 44px;
+  border-radius: 5px;
+  border: 1px solid #7ba39b;
+  background: #173b48f5;
+  color: #f1ede0;
+  box-shadow: 0 3px 12px #07131b40;
+}
+.inhabited-room .scene-label b {
+  color: #edba85;
+}
+.inhabited-room .scene-label:hover,
+.inhabited-room .scene-label:focus-visible {
+  background: #315d67;
+  border-color: #f5c69b;
+}
+.inhabited-room .scene-label small {
+  background: #102b39;
+  color: #e5ece4;
+}
+.inhabited-room .look-actions button {
+  background: #173b48f5;
+  color: #e9d4b3;
+  border-color: #90aaa8;
+}
+.inhabited-room .look-actions button:hover {
+  background: #315d67;
+}
+.inhabited-room button:focus-visible,
+.inhabited-room a:focus-visible,
+.inhabited-room summary:focus-visible,
+.inhabited-room canvas:focus-visible {
+  outline: 3px solid #f5c69b;
+  outline-offset: 4px;
+}
+@media (max-width: 700px) {
+  .inhabited-room .ship-header {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    padding: 12px;
+    gap: 8px;
+  }
+  .inhabited-room .ship-header nav {
+    padding: 0;
+    gap: 11px;
+  }
+  .inhabited-room .room-welcome {
+    top: 109px;
+    left: 24px;
+    padding: 9px 12px;
+  }
+  .inhabited-room .scene-label {
+    padding: 8px 11px;
+  }
+}
+/* Destination access stays in the main view, independent of the settings menu. */
+.destination-forward {
+  position: absolute;
+  z-index: 12;
+  right: 28px;
+  bottom: 100px;
+  padding: 12px 16px;
+  background: #102b39f5;
+  border: 1px solid #7eaaa369;
+  border-radius: 9px;
+  box-shadow: 0 4px 20px #07131b40;
+}
+.destination-forward .destination-control {
+  color: #e5ece4;
+  gap: 14px;
+}
+.destination-forward select {
+  min-width: 120px;
+  min-height: 44px;
+  background: #204c59;
+  color: #f1ede0;
+  border: 1px solid #8caaa7;
+  border-radius: 5px;
+  padding: 8px 30px 8px 10px;
+  font: inherit;
+}
+@media (max-width: 700px) {
+  .destination-forward {
+    top: 153px;
+    right: 24px;
+    bottom: auto;
+    padding: 6px 10px;
+  }
+  .destination-forward .destination-control {
+    gap: 8px;
+    font-size: 11px;
+  }
+  .destination-forward select {
+    min-width: 105px;
+    min-height: 44px;
+  }
+}
+.inhabited-room .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}

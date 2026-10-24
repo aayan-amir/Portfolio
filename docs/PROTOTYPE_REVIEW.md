@@ -43,4 +43,3 @@ The measured 3D JavaScript chunk is 948,667 bytes minified / 251,531 bytes gzip.
 ## Production preview smoke check
 
 The built site returned HTTP 200. In the production preview, Still view unmounted WebGL while Work remained readable; Enable 3D remounted the scene successfully. The static text edition and return to the workshop were also checked. The original development tab became stale during server replacement; a fresh preview tab loaded normally.
-

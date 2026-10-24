@@ -158,3 +158,7 @@ Later optional work: original ambient audio, additional personal discoveries, an
 - https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html
 - https://github.com/aayan-amir/NoClash/blob/main/README.md
 - Installed Laws of UX and Marketing Psychology skills; Sites presentation-led guidance.
+
+## Superseding design revision
+
+The user now requests a full glass room surrounded by space, selectable planetary destinations and effects, corrected drag direction, and featured NoClash/Student Portal/NoTerm case studies. Follow GLASS_OBSERVATORY_PLAN.md where this older brief differs.

@@ -1,0 +1,10 @@
+Planet surface maps: Mercury, Venus atmosphere, Mars, Jupiter, Saturn, Uranus, Neptune, Sun.
+Original creator: Solar System Scope / INOVE.
+Source: https://www.solarsystemscope.com/textures/
+License: Creative Commons Attribution 4.0 International
+https://creativecommons.org/licenses/by/4.0/
+Downloaded unmodified from the documented source mirror:
+https://github.com/TanvirAhmedArnab/SolarSystem/tree/main/SourceAssets/ThirdParty/Textures/SolarSystemScope
+Provenance: https://github.com/TanvirAhmedArnab/SolarSystem/blob/main/Docs/Legal/ThirdPartyAssets.md
+Mercury SHA256 verified: 5A5C80607F643496BAC9A631E71957DEF35ED788895F18B678AC849C2B38E48A
+Image pixels not modified. Runtime lighting and atmospheric treatment are artistic.

@@ -1,5 +1,7 @@
 # Portfolio implementation stages
 
+Current scope update: follow GLASS_OBSERVATORY_PLAN.md for the glass shell, planetary destinations, revised featured projects, and reopened camera-control bug. The stages below record the original prototype sequence.
+
 Status: foundation, initial composition, and interaction proof implemented. Stage 3 visual/performance refinement in progress.
 Updated: 24 October 2026.
 Design authority: docs/DESIGN_BRIEF.md, plus subsequent direct user instructions.

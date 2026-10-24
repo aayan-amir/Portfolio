@@ -1,5 +1,6 @@
 ---
 import { profile, projects } from '../data/content';
+import { resume } from '../data/resume';
 import '../styles/global.css';
 ---
 
@@ -27,6 +28,11 @@ import '../styles/global.css';
         Seeking backend and full-stack internships and junior roles. Open to
         freelance conversations.
       </p>
+      <p>
+        <a href={resume.url} download={resume.filename}>
+          Download résumé (PDF)
+        </a>
+      </p>
       <h2>Selected work</h2>
       {projects.map((project) => (
         <article>
@@ -49,6 +55,25 @@ import '../styles/global.css';
         <a href={`mailto:${profile.email}`}>{profile.email}</a>
       </p>
       <a href={profile.github}>GitHub</a>
+      <aside id="credits">
+        <h2>Scene credits</h2>
+        <p>
+          Planetary textures by{' '}
+          <a href="https://www.solarsystemscope.com/textures/">
+            Solar System Scope
+          </a>
+          , licensed under{' '}
+          <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>.
+          Earth map distributed with the{' '}
+          <a href="https://github.com/mrdoob/three.js/blob/dev/examples/textures/planets/earth_day_4096.jpg">
+            Three.js examples
+          </a>
+          ; no further image modifications here. Other scene geometry and
+          procedural materials are original. Additional map provenance is
+          recorded in{' '}
+          <a href="/planets/ATTRIBUTION.txt">planet texture attribution</a>.
+        </p>
+      </aside>
     </main>
   </body>
 </html>
