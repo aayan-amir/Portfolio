@@ -39,3 +39,8 @@ Continue Stage 3: profile frame time, reduce rendering overhead, refine the phys
 ## Build-size sample
 
 The measured 3D JavaScript chunk is 948,667 bytes minified / 251,531 bytes gzip. React client is 182,191 bytes / 56,632 bytes gzip. Posters are 34,314 bytes desktop and 11,348 bytes portrait. These are local build/compression sizes, not measured network timings or a Core Web Vitals result.
+
+## Production preview smoke check
+
+The built site returned HTTP 200. In the production preview, Still view unmounted WebGL while Work remained readable; Enable 3D remounted the scene successfully. The static text edition and return to the workshop were also checked. The original development tab became stale during server replacement; a fresh preview tab loaded normally.
+
