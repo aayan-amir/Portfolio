@@ -1,0 +1,30 @@
+---
+import { profile } from '../data/content';
+---
+
+<div class="briefing-email">
+  <a href={`mailto:${profile.email}`}>{profile.email}</a>
+  <button type="button" data-copy-email={profile.email} hidden>
+    Copy email
+  </button>
+  <span class="briefing-copy-status" role="status"></span>
+</div>
+<script>
+  for (const button of document.querySelectorAll<HTMLButtonElement>(
+    '[data-copy-email]',
+  )) {
+    button.hidden = false;
+    button.addEventListener('click', async () => {
+      const status = button.parentElement?.querySelector(
+        '.briefing-copy-status',
+      );
+      try {
+        await navigator.clipboard.writeText(button.dataset.copyEmail || '');
+        if (status) status.textContent = 'Email copied.';
+      } catch {
+        if (status)
+          status.textContent = 'Select the address to copy it manually.';
+      }
+    });
+  }
+</script>

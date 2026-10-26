@@ -2,7 +2,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 import { decodeEnvironment } from './environmentAsset';
-import environmentUrl from '../assets/cabin-reflections.cenv?url';
+import environmentUrl from '../assets/orbital-reflections.cenv?url';
 
 /** A baked version of the original lightformers, including all roughness levels. */
 export function CabinEnvironment({

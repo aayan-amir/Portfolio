@@ -24,6 +24,7 @@ export function usePreparedRenderer(
   const [prepared, setPrepared] = useState(false);
   const ready = useRef(false),
     announced = useRef(false);
+  const renderSamples = useRef<number[]>([]);
   const callbacks = useRef({ onReady, onFailure });
   callbacks.current = { onReady, onFailure };
   useEffect(() => {
@@ -95,7 +96,15 @@ export function usePreparedRenderer(
     if (!ready.current) return;
     try {
       if (!announced.current) performance.mark('cabin-first-render-start');
+      const renderStarted = performance.now();
       gl.render(scene, camera);
+      renderSamples.current.push(performance.now() - renderStarted);
+      if (renderSamples.current.length === 60) {
+        const ordered = renderSamples.current.sort((a, b) => a - b);
+        gl.domElement.dataset.renderCpuP50Ms = ordered[29].toFixed(2);
+        gl.domElement.dataset.renderCpuP95Ms = ordered[56].toFixed(2);
+        renderSamples.current = [];
+      }
       if (!announced.current) {
         performance.mark('cabin-first-render-end');
         announced.current = true;

@@ -1,9 +1,11 @@
+import CompanyProcess from './CompanyProcess';
 import { contributions } from '../data/contributions';
 export default function ContributionLog() {
   return (
     <section className="work-log" aria-label="Contribution log">
+      <CompanyProcess />
       <h3>What changed through my work</h3>
-      <p>KOGO Metal · Backend Developer (Contract) · January–September 2026</p>
+      <p>Backend Developer (Contract) · January–September 2026</p>
       {contributions.map((item) => (
         <details key={item.title}>
           <summary>

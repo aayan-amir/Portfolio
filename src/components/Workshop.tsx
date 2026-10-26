@@ -1,6 +1,5 @@
-import '../styles/inhabited-room.css';
-import '../styles/quiet-ship.css';
 import '../styles/enhancements.css';
+import '../styles/orbital-studio.css';
 import { useCabinAudio } from '../state/useCabinAudio';
 import { readLocal, writeLocal } from '../state/storage';
 import ContributionLog from './ContributionLog';
@@ -26,13 +25,15 @@ import {
   type Section,
   type ProjectId,
 } from '../data/navigation';
-const Room = lazy(() => import('../scene/Room'));
+const LegacyRoom = import.meta.env.DEV
+  ? lazy(() => import('../scene/Room'))
+  : null;
+const WorkbenchRoom = lazy(() => import('../scene/OrbitalWorkbench'));
 const StarMap = lazy(() => import('./StarMap'));
 const ProjectDemo = lazy(() => import('../demos/ProjectDemo'));
 const names: Record<Section, string> = {
   about: 'About',
   work: 'Work',
-  experience: 'Approach',
   contact: 'Contact',
 };
 class SceneBoundary extends Component<
@@ -69,8 +70,14 @@ export default function Workshop() {
     body: 'earth',
   });
   const [mapOpen, setMapOpen] = useState(false);
+  const Room =
+    import.meta.env.DEV &&
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).has('legacyRoom') &&
+    LegacyRoom
+      ? LegacyRoom
+      : WorkbenchRoom;
   const [docked, setDocked] = useState(false);
-  const [personalNote, setPersonalNote] = useState(false);
   const [visited, setVisited] = useState<BodyId[]>([]);
   const [arrival, setArrival] = useState<ArrivalPhase>('preparing');
   const [sceneRetry, setSceneRetry] = useState(0);
@@ -86,10 +93,6 @@ export default function Workshop() {
       return next;
     });
     audio.play('arrival');
-  }
-  function revealNote() {
-    setPersonalNote((value) => !value);
-    audio.play('click');
   }
   const [pendingProject, setPendingProject] = useState<ProjectId | null>(null);
   const [demo, setDemo] = useState(0);
@@ -155,19 +158,18 @@ export default function Workshop() {
     if (!destination.section && element.open) {
       element.close();
       if (restoreFocus.current?.isConnected) restoreFocus.current.focus();
-      else
-        document
-          .querySelector<HTMLButtonElement>('.ship-header button')
-          ?.focus();
+      else document.querySelector<HTMLElement>('.contact-shortcut')?.focus();
     }
   }, [destination.section]);
   const navigate = (
     section: Section | null,
     project: ProjectId | null = null,
+    withSound = true,
   ) => {
     cancelOpening();
     setMapOpen(false);
-    audio.play('click');
+    if (withSound)
+      audio.play(section === null ? 'close' : (project ?? 'click'));
     const next = { ...destination, section, project };
     setDestination(next);
     const nextUrl = window.location.pathname + destinationSearch(next);
@@ -182,6 +184,7 @@ export default function Workshop() {
   }, [destination.section, destination.project]);
   function chooseBody(body: BodyId) {
     cancelOpening();
+    if (body !== destination.body) audio.play('depart');
     const next = { ...destination, body };
     setDestination(next);
     if (body !== destination.body)
@@ -193,7 +196,6 @@ export default function Workshop() {
   }
   function sceneSelect(section: Section, project?: ProjectId) {
     cancelOpening();
-    audio.play('click');
     if (
       section === 'work' &&
       project &&
@@ -201,9 +203,13 @@ export default function Workshop() {
       !lowEffects &&
       !staticView
     ) {
+      audio.play(project);
       setPendingProject(project);
       setDemo((value) => value + 1);
-      openingTimer.current = setTimeout(() => navigate(section, project), 650);
+      openingTimer.current = setTimeout(
+        () => navigate(section, project, false),
+        200,
+      );
     } else navigate(section, project ?? null);
   }
   const destinationControl = (
@@ -231,18 +237,21 @@ export default function Workshop() {
     try {
       await navigator.clipboard.writeText(profile.email);
       setCopied(true);
+      audio.play('copy');
     } catch {
       setCopied(false);
     }
   }
   return (
     <main
-      className={`workshop quiet-ship inhabited-room${capture ? ' capture-room' : ''}`}
+      className={`workshop orbital-studio${capture ? ' capture-room' : ''}`}
       id="main"
       data-ready={ready}
+      data-failed={failed}
       data-body={destination.body}
       data-low-effects={lowEffects}
       data-sound={audio.enabled ? 'on' : 'off'}
+      data-music={audio.musicEnabled ? 'on' : 'off'}
       data-lighting="working"
       data-arrival={arrival}
       style={
@@ -254,18 +263,36 @@ export default function Workshop() {
       <a className="skip-link" href="/read">
         Read the text portfolio
       </a>
-      <div className="room-poster" aria-hidden="true" />
+      <picture className="studio-poster" aria-hidden="true">
+        <source media="(max-width:700px)" srcSet="/orbital-studio-phone.webp" />
+        <img
+          src="/orbital-studio.webp"
+          alt=""
+          width="1440"
+          height="900"
+          decoding="async"
+        />
+      </picture>
+      <div
+        className="studio-loading"
+        role="status"
+        aria-hidden={ready || failed}
+      >
+        <span className="loading-orbit" aria-hidden="true" />
+        <p>Opening the workshop</p>
+        <span>Projects and contact are ready to explore.</span>
+      </div>
       {mounted && !failed && (
         <SceneBoundary key={sceneRetry} onError={() => setFailed(true)}>
           <Suspense fallback={null}>
             <Room
               key={sceneRetry}
               docked={docked}
-              personalNote={personalNote}
-              audioEnabled={audio.enabled}
-              onRadio={() => void audio.toggle()}
+              personalNote={false}
+              audioEnabled={audio.musicEnabled}
+              onRadio={() => void audio.toggleMusic()}
               onDock={toggleDock}
-              onDiscover={revealNote}
+              onDiscover={() => {}}
               onMap={() => setMapOpen(true)}
               onArrivalPhase={setArrival}
               onArrived={arrived}
@@ -288,6 +315,22 @@ export default function Workshop() {
           </Suspense>
         </SceneBoundary>
       )}
+      {failed && (
+        <div className="studio-failure" role="status">
+          <span>
+            Scenery unavailable. Projects and contact are still available.
+          </span>
+          <button
+            onClick={() => {
+              setFailed(false);
+              setReady(false);
+              setSceneRetry((v) => v + 1);
+            }}
+          >
+            Retry scenery
+          </button>
+        </div>
+      )}
       <span className="sr-only" role="status">
         {pendingProject
           ? `Opening ${projects.find((item) => item.id === pendingProject)?.name} case study`
@@ -301,77 +344,122 @@ export default function Workshop() {
           </a>
         </h1>
         <nav aria-label="Portfolio">
-          <button onClick={() => navigate('work')}>Work</button>
-          <button onClick={() => navigate('about')}>About</button>
+          <button className="desktop-nav" onClick={() => navigate('work')}>
+            Work
+          </button>
+          <button
+            className="desktop-nav about-shortcut"
+            aria-haspopup="dialog"
+            onClick={() => navigate('about')}
+          >
+            About
+          </button>
           <a
             className="resume-shortcut"
+            aria-label="Download résumé (PDF)"
             href={resume.url}
             download={resume.filename}
           >
-            Download résumé
+            Résumé ↓
           </a>
-          <button onClick={() => navigate('contact')}>Contact ↗</button>
+          <button
+            className="contact-shortcut"
+            type="button"
+            aria-haspopup="dialog"
+            onClick={() => navigate('contact')}
+          >
+            Contact me
+          </button>
         </nav>
       </header>
-      <div className="room-welcome">
-        <span>Welcome to my corner of orbit.</span>
+      <section className="studio-introduction" aria-label="What I build">
+        <h2>
+          I turn messy documents and manual workflows into software people can
+          use.
+        </h2>
         <p>
-          Useful software.
-          <br />A curious mind.
+          Backend & full-stack development.
+          <br />
+          Open to internships, junior roles & freelance projects.
         </p>
-        <small>Backend & full-stack internships / junior roles</small>
-      </div>
-      <div
-        className="look-actions"
-        role="group"
-        aria-label="Look around the room"
-      >
-        <button aria-label="Look left" onClick={() => setLook((v) => v - 1)}>
-          ←
-        </button>
-        <button
-          aria-label="Look up"
-          onClick={() => setLookVertical((v) => v - 1)}
+        <a
+          className="studio-proof"
+          href="/read/#experience"
+          onClick={(event) => {
+            event.preventDefault();
+            navigate('about');
+          }}
         >
-          ↑
-        </button>
-        <span>Look around</span>
-        <button
-          aria-label="Look down"
-          onClick={() => setLookVertical((v) => v + 1)}
-        >
-          ↓
-        </button>
-        <button aria-label="Look right" onClick={() => setLook((v) => v + 1)}>
-          →
-        </button>
-      </div>
-      <div className="destination-forward">
-        {destinationControl}
-        <button className="chart-button" onClick={() => setMapOpen(true)}>
-          Star map
-        </button>
-        <span className="arrival-status" role="status">
-          {arrival === 'preparing'
-            ? 'Preparing destination…'
-            : arrival === 'travelling'
-              ? 'Arriving…'
-              : arrival === 'fallback'
-                ? 'Simplified scenery'
-                : bodies.find((b) => b.id === destination.body)?.cue}
-        </span>
-        {(failed || arrival === 'fallback') && (
-          <button
-            onClick={() => {
-              setFailed(false);
-              setReady(false);
-              setSceneRetry((v) => v + 1);
-            }}
-          >
-            Retry scenery
+          Company work · approximately 30% faster reconciliation ↗
+        </a>
+      </section>
+      <nav className="studio-project-rail" aria-label="Projects">
+        {projects.map((item) => (
+          <button key={item.id} onClick={() => sceneSelect('work', item.id)}>
+            {item.name}
           </button>
-        )}
-      </div>
+        ))}
+      </nav>
+      <details className="look-menu">
+        <summary>Look around</summary>
+        <div
+          className="look-actions"
+          role="group"
+          aria-label="Look around the room"
+        >
+          <button aria-label="Look left" onClick={() => setLook((v) => v - 1)}>
+            ←
+          </button>
+          <button
+            aria-label="Look up"
+            onClick={() => setLookVertical((v) => v - 1)}
+          >
+            ↑
+          </button>
+          <button
+            aria-label="Look down"
+            onClick={() => setLookVertical((v) => v + 1)}
+          >
+            ↓
+          </button>
+          <button aria-label="Look right" onClick={() => setLook((v) => v + 1)}>
+            →
+          </button>
+          <button onClick={() => setReset((v) => v + 1)}>Reset view</button>
+        </div>
+      </details>
+      <details className="destination-forward">
+        <summary>
+          {bodies.find((b) => b.id === destination.body)?.name}{' '}
+          <span aria-hidden="true">⌄</span>
+        </summary>
+        <div className="destination-options">
+          {destinationControl}
+          <button className="chart-button" onClick={() => setMapOpen(true)}>
+            Open star map
+          </button>
+          <span className="arrival-status" role="status">
+            {arrival === 'preparing'
+              ? 'Preparing destination…'
+              : arrival === 'travelling'
+                ? 'Arriving…'
+                : arrival === 'fallback'
+                  ? 'Simplified scenery'
+                  : bodies.find((b) => b.id === destination.body)?.cue}
+          </span>
+          {(failed || arrival === 'fallback') && (
+            <button
+              onClick={() => {
+                setFailed(false);
+                setReady(false);
+                setSceneRetry((v) => v + 1);
+              }}
+            >
+              Retry scenery
+            </button>
+          )}
+        </div>
+      </details>
       {mapOpen && (
         <OptionalBoundary
           fallback={
@@ -405,11 +493,6 @@ export default function Workshop() {
           </Suspense>
         </OptionalBoundary>
       )}
-      {personalNote && (
-        <p className="discovery-caption" role="status">
-          Off the clock: music, aviation, games, and astronomy.
-        </p>
-      )}
       <footer className="ship-footer">
         <span className="scene-hint">
           {failed
@@ -423,36 +506,59 @@ export default function Workshop() {
         <details className="ship-settings">
           <summary>Cabin controls</summary>
           <div className="settings-content">
-            <button
-              aria-pressed={audio.enabled}
-              onClick={() => void audio.toggle()}
-            >
-              {audio.enabled ? 'Mute cabin sound' : 'Enable cabin sound'}
-            </button>
-            <label className="volume-control">
-              Sound volume
-              <input
-                aria-label="Sound volume"
-                type="range"
-                min="0"
-                max="1"
-                step="0.05"
-                value={audio.volume}
-                onChange={(e) => audio.setVolume(Number(e.target.value))}
-              />
-            </label>
-            <button aria-pressed={docked} onClick={toggleDock}>
-              {docked ? 'Launch inspection drone' : 'Dock inspection drone'}
-            </button>
-            <button aria-pressed={personalNote} onClick={revealNote}>
-              Lunar note · left wall
-            </button>
-            <button
-              disabled={!audio.enabled}
-              onClick={() => audio.play('signal')}
-            >
-              Play radio signal
-            </button>
+            <div className="settings-audio-group">
+              <button
+                aria-pressed={audio.musicEnabled}
+                aria-describedby="music-description"
+                onClick={() => void audio.toggleMusic()}
+              >
+                Ambient music: {audio.musicEnabled ? 'On' : 'Off'}
+              </button>
+              <p id="music-description" className="settings-note">
+                Soft pads and distant chimes.
+              </p>
+              <label className="volume-control">
+                Music volume
+                <input
+                  aria-label="Music volume"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={audio.musicVolume}
+                  onChange={(event) =>
+                    audio.setMusicVolume(Number(event.target.value))
+                  }
+                />
+              </label>
+            </div>
+            <div className="settings-audio-group">
+              <button
+                aria-pressed={audio.enabled}
+                onClick={() => void audio.toggle()}
+              >
+                Sound effects: {audio.enabled ? 'On' : 'Off'}
+              </button>
+              <label className="volume-control">
+                Effects volume
+                <input
+                  aria-label="Effects volume"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value={audio.volume}
+                  onChange={(event) =>
+                    audio.setVolume(Number(event.target.value))
+                  }
+                />
+              </label>
+            </div>
+            {audio.error && (
+              <p role="status" className="settings-note">
+                {audio.error}
+              </p>
+            )}
             <button
               aria-pressed={lowEffects}
               onClick={() => setLowEffects((v) => !v)}
@@ -464,9 +570,6 @@ export default function Workshop() {
               onClick={() => setStaticView((v) => !v)}
             >
               {staticView ? 'Enable movement' : 'Still view'}
-            </button>
-            <button onClick={() => setReset((v) => v + 1)}>
-              Reset camera view
             </button>
             <a href="/read">Text portfolio ↗</a>
             <a href="/read#credits">Scene credits</a>
@@ -629,59 +732,6 @@ export default function Workshop() {
                 </OptionalBoundary>
               </>
             )}
-            {destination.section === 'experience' && (
-              <>
-                <p className="eyebrow">Experience & approach</p>
-                <h2 id="panel-title" tabIndex={-1}>
-                  Practical work.
-                  <br />
-                  Thoughtful process<span>.</span>
-                </h2>
-                <p className="panel-lead">
-                  The stack is a tool. The problem is the starting point.
-                </p>
-                <p>
-                  I'm Aayan, a software developer in Karachi seeking backend and
-                  full-stack internships and junior roles. Alongside these
-                  projects, I've built in-house software to move repetitive
-                  inventory and outreach record keeping online.
-                </p>
-                <p>
-                  I care about understanding the task, reviewing the details,
-                  and building something that helps the person doing the work.
-                </p>
-                <ContributionLog />
-                <div className="approach-step">
-                  <span>Understand the task</span>
-                  <p>
-                    Start with how people work, where repetition creeps in, and
-                    what would make the task easier.
-                  </p>
-                </div>
-                <div className="approach-step">
-                  <span>Build a practical solution</span>
-                  <p>
-                    Turn manual inventory keeping and outreach records into
-                    useful online workflows.
-                  </p>
-                </div>
-                <div className="approach-step">
-                  <span>Use AI with judgment</span>
-                  <p>
-                    I use AI tools to help with development, review what they
-                    generate, and check the result rather than treating the
-                    first answer as finished work.
-                  </p>
-                </div>
-                <div className="note-card">
-                  <span>What’s next</span>
-                  <p>
-                    A backend or full-stack internship or junior role where I
-                    can contribute, learn, and keep improving.
-                  </p>
-                </div>
-              </>
-            )}
             {destination.section === 'contact' && (
               <>
                 <p className="eyebrow">A conversation is a good start</p>
@@ -735,6 +785,9 @@ export default function Workshop() {
                 {names[section]}
               </button>
             ))}
+            <a href={resume.url} download={resume.filename}>
+              Résumé ↓
+            </a>
           </nav>
         </div>
       </dialog>

@@ -25,7 +25,7 @@ test('overview clears URL state', () =>
     '',
   ));
 test('destination URLs round-trip', () => {
-  for (const section of ['about', 'work', 'experience', 'contact']) {
+  for (const section of ['about', 'work', 'contact']) {
     const dest = {
       body: 'earth',
       section,
@@ -41,3 +41,10 @@ test('planet and project share a URL', () => {
 });
 test('unknown planet falls back to Earth', () =>
   assert.equal(readDestination('?destination=bad').body, 'earth'));
+
+test('retired experience links resolve to About while retaining the planet', () => {
+  assert.deepEqual(
+    readDestination('?destination=neptune&section=experience&project=noclash'),
+    { body: 'neptune', section: 'about', project: null },
+  );
+});

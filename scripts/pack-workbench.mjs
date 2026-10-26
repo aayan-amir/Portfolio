@@ -1,0 +1,12 @@
+import {readFile,writeFile} from 'node:fs/promises';
+import {gzipSync} from 'node:zlib';
+import {NodeIO} from '@gltf-transform/core';
+import {ALL_EXTENSIONS,EXTMeshoptCompression} from '@gltf-transform/extensions';
+import {MeshoptEncoder,MeshoptDecoder} from 'meshoptimizer';
+await Promise.all([MeshoptEncoder.ready,MeshoptDecoder.ready]);
+const io=new NodeIO().registerExtensions(ALL_EXTENSIONS).registerDependencies({'meshopt.encoder':MeshoptEncoder,'meshopt.decoder':MeshoptDecoder});
+const doc=await io.readBinary(new Uint8Array(await readFile(process.argv[2]||'output/orbital-workbench.glb')));
+doc.createExtension(EXTMeshoptCompression).setRequired(true).setEncoderOptions({method:EXTMeshoptCompression.EncoderMethod.QUANTIZE});
+const result=gzipSync(await io.writeBinary(doc),{level:9});
+await writeFile(process.argv[3]||'src/assets/orbital-workbench.croom',result);
+console.log('Packed workbench',result.length,'bytes');

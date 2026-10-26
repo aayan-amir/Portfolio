@@ -67,5 +67,10 @@ Desktop.ini
 *.blend[0-9]
 *.blend[0-9][0-9]
 
-# Public résumé PDFs, scene assets, source art, docs and package-lock.json
-# are intentional project files and must remain trackable.
+# Local Markdown notes and planning/review documents (all directories)
+*.[mM][dD]
+*.[mM][aA][rR][kK][dD][oO][wW][nN]
+
+# Public résumé PDFs, scene assets, source art and package-lock.json
+# are intentional project files and remain trackable.
+*.md

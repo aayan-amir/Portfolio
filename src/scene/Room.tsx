@@ -41,7 +41,7 @@ import { PlanetTreatment } from './PlanetTreatment';
 import { resume, downloadResume } from '../data/resume';
 import type { BodyId } from '../data/celestial';
 import type { ProjectId, Section } from '../data/navigation';
-type Props = {
+export type Props = {
   docked: boolean;
   personalNote: boolean;
   audioEnabled: boolean;
@@ -95,9 +95,9 @@ const labels = [
   },
   {
     id: 'career',
-    title: 'About & experience',
+    title: 'About',
     detail: 'The person behind the work',
-    section: 'experience',
+    section: 'about',
   },
   {
     id: 'resume',
@@ -505,7 +505,7 @@ function Scene(
         motion={!props.reduced && !props.frozen}
         canSelect={available}
         dragged={dragged}
-        onActivate={() => props.onSelect('experience')}
+        onActivate={() => props.onSelect('about')}
       >
         <Notebook />
       </RoomObject>

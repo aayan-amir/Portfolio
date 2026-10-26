@@ -35,18 +35,20 @@ import '../styles/global.css';
           Download résumé (PDF)
         </a>
       </p>
-      <h2>Selected work</h2>
+      <h2 id="selected-work">Selected work</h2>
       {projects.map((project) => (
-        <article>
+        <article id={project.id}>
           <p class="eyebrow">{project.category}</p>
-          <h3>{project.name}</h3>
+          <h3>
+            <a href={`/work/${project.id}/`}>{project.name}</a>
+          </h3>
           <CaseStudy project={project} level={4} />
           {project.url && <a href={project.url}>Visit live project</a>}{' '}
           {project.source && <a href={project.source}>Source code</a>}
         </article>
       ))}
-      <h2>Contributions</h2>
-      <p>KOGO Metal · Backend Developer (Contract) · January–September 2026</p>
+      <h2 id="experience">Contributions</h2>
+      <p>Backend Developer (Contract) · January–September 2026</p>
       {contributions.map((item) => (
         <article>
           <h3>{item.title}</h3>

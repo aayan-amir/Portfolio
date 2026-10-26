@@ -1,20 +1,18 @@
+import ProjectEvidence from './ProjectEvidence';
 import type { Project } from '../data/content';
 export default function CaseStudy({
   project,
   level = 3,
 }: {
   project: Project;
-  level?: 3 | 4;
+  level?: 2 | 3 | 4;
 }) {
-  const Heading = level === 4 ? 'h4' : 'h3';
+  const Heading = level === 2 ? 'h2' : level === 4 ? 'h4' : 'h3';
   return (
     <div className="case-study">
+      <ProjectEvidence id={project.id} />
       <Heading>What I brought to the project</Heading>
       <p>{project.contribution}</p>
-      <Heading>The problem</Heading>
-      <p>{project.problem}</p>
-      <Heading>The approach</Heading>
-      <p>{project.solution}</p>
       <Heading>What the application delivers</Heading>
       <p>{project.outcome}</p>
       <ul>
@@ -29,6 +27,10 @@ export default function CaseStudy({
           <p>{item.detail}</p>
         </section>
       ))}
+      <Heading>The problem</Heading>
+      <p>{project.problem}</p>
+      <Heading>The approach</Heading>
+      <p>{project.solution}</p>
       <Heading>Scope and limitations</Heading>
       <p>{project.limits}</p>
       <p className="case-source">

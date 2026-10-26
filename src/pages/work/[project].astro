@@ -1,0 +1,82 @@
+---
+import type { GetStaticPaths, InferGetStaticPropsType } from 'astro';
+import BriefingLayout from '../../layouts/BriefingLayout.astro';
+import BriefingContact from '../../components/BriefingContact.astro';
+import CaseStudy from '../../components/CaseStudy';
+import { projects, profile } from '../../data/content';
+import { resume } from '../../data/resume';
+export const getStaticPaths = (() =>
+  projects.map((project) => ({
+    params: { project: project.id },
+    props: { project },
+  }))) satisfies GetStaticPaths;
+type Props = InferGetStaticPropsType<typeof getStaticPaths>;
+const { project } = Astro.props;
+---
+
+<BriefingLayout
+  title={`${project.name} — Aayan Amir`}
+  description={project.summary}
+>
+  <main id="main" class="briefing-document">
+    <a class="document-back" href="/read/#selected-work">
+      Back to selected work
+    </a>
+    <header class="document-heading">
+      <p class="document-category">{project.category}</p>
+      <h1>{project.name}</h1>
+      <p class="document-lead">{project.summary}</p>
+      <ul class="document-tags" aria-label="Technologies">
+        {project.tags.map((tag) => (
+          <li>{tag}</li>
+        ))}
+      </ul>
+      <div class="briefing-actions">
+        {project.url && (
+          <a
+            class="briefing-button secondary"
+            href={project.url}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Try {project.name} live ↗
+          </a>
+        )}
+        <a
+          class="briefing-button secondary"
+          href={project.source}
+          target="_blank"
+          rel="noreferrer"
+        >
+          View source code ↗
+        </a>
+      </div>
+    </header>
+    <CaseStudy project={project} level={2} />
+    <section class="document-contact" aria-labelledby="contact-title">
+      <h2 id="contact-title">Have a similar problem to solve?</h2>
+      <p>I’m open to backend and full-stack roles, and freelance projects.</p>
+      <div class="briefing-actions">
+        <a class="briefing-button primary" href={`mailto:${profile.email}`}>
+          Contact me ↗
+        </a>
+        <a
+          class="briefing-button secondary"
+          href={resume.url}
+          download={resume.filename}
+        >
+          Download résumé
+        </a>
+      </div>
+      <BriefingContact />
+    </section>
+    <nav class="document-related" aria-label="Other projects">
+      {projects
+        .filter((item) => item.id !== project.id)
+        .map((item) => (
+          <a href={`/work/${item.id}/`}>Read about {item.name} ↗</a>
+        ))}
+      <a href="/">Enter the workshop ↗</a>
+    </nav>
+  </main>
+</BriefingLayout>

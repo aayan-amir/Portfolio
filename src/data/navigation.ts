@@ -1,16 +1,18 @@
 import { validBody, type BodyId } from './celestial.ts';
-export type Section = 'about' | 'work' | 'experience' | 'contact';
+export type Section = 'about' | 'work' | 'contact';
 export type ProjectId = 'noclash' | 'student-portal' | 'noterm';
 export type Destination = {
   body: BodyId;
   section: Section | null;
   project: ProjectId | null;
 };
-const sections = ['about', 'work', 'experience', 'contact'];
+const sections = ['about', 'work', 'contact'];
 const projects = ['noclash', 'student-portal', 'noterm'];
 export function readDestination(search: string): Destination {
   const params = new URLSearchParams(search);
-  const section = params.get('section');
+  const requestedSection = params.get('section');
+  const section =
+    requestedSection === 'experience' ? 'about' : requestedSection;
   const project = params.get('project');
   return {
     body: validBody(params.get('destination')),

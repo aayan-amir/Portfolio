@@ -374,3 +374,146 @@
 .workshop[data-ready='false'] .room-canvas canvas {
   visibility: hidden;
 }
+
+/* Development-only clean cabin capture, selected through ?capture=1. */
+.capture-room .ship-header,
+.capture-room .room-welcome,
+.capture-room .room-briefing,
+.capture-room .room-label-layer,
+.capture-room .look-actions,
+.capture-room .destination-forward,
+.capture-room .ship-footer,
+.capture-room .skip-link {
+  display: none !important;
+}
+
+/* A short, readable pitch inside the workshop; the room remains the main surface. */
+.room-briefing {
+  position: absolute;
+  top: 130px;
+  left: 48px;
+  z-index: 3;
+  width: 330px;
+  padding: 16px 18px;
+  background: #102b39f2;
+  border-left: 2px solid #d7a567;
+  border-radius: 0 6px 6px 0;
+  color: #eeece2;
+}
+.room-briefing h2 {
+  font:
+    550 21px/1.25 'Manrope Variable',
+    sans-serif;
+  letter-spacing: -0.5px;
+  margin: 0 0 9px;
+}
+.room-briefing > p {
+  font:
+    400 12px/1.5 'DM Sans',
+    sans-serif;
+  color: #c1d1d0;
+  margin: 0 0 8px;
+}
+.room-briefing nav {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 16px;
+}
+.room-briefing nav a {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 44px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #eeece2;
+}
+.room-briefing nav a span {
+  font-size: 10px;
+  color: #b9d3d0;
+}
+.room-briefing .company-proof {
+  grid-column: 1/-1;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  border-top: 1px solid #59767b;
+  margin-top: 6px;
+  padding-top: 5px;
+}
+.room-briefing nav a:hover {
+  color: #d7a567;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.inhabited-room .ship-header nav .contact-shortcut {
+  background: #d7a567;
+  color: #102b39;
+  padding: 11px 15px;
+  border-radius: 4px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+}
+@media (max-width: 700px) {
+  .room-briefing {
+    top: 106px;
+    left: 16px;
+    width: min(330px, calc(100% - 32px));
+    padding: 11px 14px;
+  }
+  .room-briefing h2 {
+    font-size: 16px;
+    line-height: 1.25;
+    max-width: 290px;
+    margin-bottom: 6px;
+  }
+  .room-briefing > p {
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+  .room-briefing nav a {
+    font-size: 11px;
+    min-height: 36px;
+  }
+  .room-briefing nav a span {
+    font-size: 9px;
+  }
+  .room-briefing .company-proof {
+    min-height: 32px;
+    margin-top: 4px;
+    padding-top: 4px;
+  }
+  .inhabited-room .ship-header nav .text-shortcut {
+    display: none;
+  }
+  .inhabited-room .ship-header nav .contact-shortcut {
+    display: inline-flex;
+    font-size: 11px;
+    padding: 9px 11px;
+    min-height: 40px;
+  }
+}
+@media (max-height: 620px) {
+  .room-briefing {
+    top: 105px;
+    padding: 9px 12px;
+  }
+  .room-briefing h2 {
+    font-size: 16px;
+  }
+  .room-briefing > p {
+    margin-bottom: 2px;
+  }
+  .room-briefing nav a {
+    min-height: 30px;
+  }
+}
+
+@media(max-width:700px){
+ .inhabited-room .destination-forward{top:auto;bottom:132px;left:16px;right:16px;max-width:none;flex-wrap:nowrap;padding:7px 10px;min-height:60px}
+ .inhabited-room .destination-forward .destination-control{flex:1;min-width:0;justify-content:space-between}
+ .inhabited-room .destination-forward .arrival-status{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+ .inhabited-room .ship-header nav .contact-shortcut{white-space:nowrap;flex-shrink:0;min-width:80px;justify-content:center}
+}
